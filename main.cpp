@@ -1,16 +1,17 @@
-#include <stdio.h>
+#include <iostream>
 #include <allegro5/allegro.h>
-int main(void) {
-    ALLEGRO_DISPLAY * display = NULL;
+using namespace std;
+int main(int argc,char* argv[]) {
+    ALLEGRO_DISPLAY * display = nullptr;
 
     if( !al_init() ) {
-        fprintf( stderr, "Failed to initialize allegro!\n" );
+        cout << "Failed to initialize allegro!" << endl;
         return - 1;
     }
 
     display = al_create_display( 640, 480 );
     if( !display ) {
-        fprintf( stderr, "Failed to create display!\n" );
+        cout << "Failed to create display!"<< endl;
         return - 1;
     }
 
