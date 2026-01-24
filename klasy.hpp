@@ -3,12 +3,15 @@
 #include <memory>
 #include<string>
 #include <vector>
-#include <ranges>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_color.h>
 #include <allegro5/allegro_image.h>
+#include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
+inline int screen_width, screen_height;
 typedef struct {
     ALLEGRO_BITMAP* normal;//wyliczona mapa normal
     ALLEGRO_BITMAP* hover;// wyliczona mapa przy najechaniu
@@ -34,6 +37,7 @@ typedef struct {
     ALLEGRO_COLOR shadow_color;//kolor cienia
     shared_ptr<ButtonImage> images;
 } ButtonParameters;
+int actual_value(const string &value);
 ALLEGRO_COLOR f_HTML(string html_color);
 vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
@@ -49,12 +53,16 @@ class ButtonFactory {
 class Button{
     string name;
     string posx, posy;
+    string fontsize,font;
+    ALLEGRO_COLOR font_color,font_shadow_color;
+    ALLEGRO_BITMAP* ShadowFont;
     shared_ptr<ButtonParameters> param;
 
 public:
-    Button(ButtonFactory& factory, string styleID, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam);
-    Button(ButtonFactory& factory, string styleID, const vector<string>& res, string nam);
+    Button(ButtonFactory& factory, string styleID,const vector<string>& font_h, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+
     ~Button();
 private:
     void extractPosition(const vector<string>& res);
+    static void generateFont();
 };

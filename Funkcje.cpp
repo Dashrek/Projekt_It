@@ -1,7 +1,19 @@
 //
 // Created by karol on 23.01.2026.
 //
+#include <allegro5/allegro_ttf.h>
+
 #include "klasy.hpp"
+int actual_value(const string &value) {
+    if (value.find("vh")) {
+        return static_cast<int>(static_cast<float>(stoi(split_manual(value, "vh")[0])) / 100.0f * static_cast<float>(screen_height));
+    }if (value.find("vw")) {
+        return static_cast<int>(static_cast<float>(stoi(split_manual(value, "vw")[0])) / 100.0f * static_cast<float>(screen_width));
+    }if (value.find("px")) {
+        return stoi(split_manual(value,"px")[0]);
+    }
+    return -1;
+}
 ALLEGRO_COLOR f_HTML(string html_color) {//funkcja konwertująca kolor html na kolor w wersji zwykłej + alpha
     int r=stoi(html_color.substr(1,2),nullptr,16);
     int g=stoi(html_color.substr(3,2),nullptr,16);
@@ -13,6 +25,7 @@ ALLEGRO_COLOR f_HTML(string html_color) {//funkcja konwertująca kolor html na k
         int a = stoi(html_color.substr(7, 2), nullptr, 16);
         return al_map_rgba( r,g,b ,a);
     }
+    return al_map_rgba(0,0,0,255);
 };
 vector<string> split_manual(string s,const string delimiter) {//własny split
     size_t pos = 0;
@@ -24,26 +37,35 @@ vector<string> split_manual(string s,const string delimiter) {//własny split
     res.push_back(s);
     return res;
 }
-Button::Button(ButtonFactory& factory, string styleID, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
+Button::Button(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
 : name(nam) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
 
         param = factory.getOrCreate(styleID, res, col);//style id to nazwa jak class w css
         extractPosition(res);
-}
-Button::Button(ButtonFactory& factory, string styleID, const vector<string>& res, string nam)
-: name(nam) {
 
-        param = factory.getOrCreate(styleID); // Pobiera istniejący lub tworzy pusty
-        extractPosition(res);
 }
 void Button::extractPosition(const vector<string>& res) {
     for (auto i : res) {
         vector<string> k = split_manual(i, ":");
-        if (k[0] == "position-x") posx = k[1];
+        if (k[0] == "position-x") posx = k[1];//pozycja przycisku w X
         if (k[0] == "position-y") posy = k[1];
-        if (k[0]=="font-size")
+        if (k[0]=="font-size") fontsize=k[1];//rozmiar czionki
+        if (k[0]=="font-name") font=k[1];//path czcionki
+        if (k[0]=="font") font_color=f_HTML(k[1]); //kolor fontu w html
+        if (k[0]=="font-shadow") font_shadow_color=f_HTML(k[1]); //kolor cienia fontu w html
     }
 }
+
+void Button::generateFont() {
+    ALLEGRO_FONT* font_1=al_load_ttf_font(font.c_str(),actual_value(fontsize),0);
+    int w = al_get_text_width(font_1, name.c_str());
+    int h = al_get_font_line_height(font_1);
+    al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
+    al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
+    ALLEGRO_BITMAP* bi=al_create_bitmap(w,h,4);
+
+}
+
 Button::~Button() {
 
 }
@@ -71,7 +93,7 @@ shared_ptr<ButtonParameters> ButtonFactory::getOrCreate(string id, const vector<
     styles[id] = p;
     return p;
 }
-void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col) {
+void ButtonFactory::updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col) {
     for (const auto& i : res){
         vector<string> k= split_manual(i,":");
         if (k[0]=="width"){
