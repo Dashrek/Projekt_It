@@ -14,3 +14,5 @@ main:
 
 clean:
 	rm -rf *.o $(APPNAME)
+run:
+	./myprog.exe

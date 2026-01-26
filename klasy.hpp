@@ -4,10 +4,12 @@
 #include<string>
 #include <vector>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_color.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
+#include <math.h>
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
@@ -41,6 +43,7 @@ int actual_value(const string &value);
 ALLEGRO_COLOR f_HTML(string html_color);
 vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
+void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
@@ -48,7 +51,7 @@ class ButtonFactory {
     shared_ptr<ButtonParameters> getOrCreate(string id, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
     private:
     void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col);
-
+    void createRectangle(shared_ptr<ButtonParameters> p);
     };
 class Button{
     string name;
@@ -59,10 +62,17 @@ class Button{
     shared_ptr<ButtonParameters> param;
 
 public:
-    Button(ButtonFactory& factory, string styleID,const vector<string>& font_h, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
 
     ~Button();
 private:
     void extractPosition(const vector<string>& res);
-    static void generateFont();
+    void generateFont();
+};
+class Page{
+    vector<unique_ptr<Button>> buttons;
+public:
+    void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
+    void buildButtons();
+    void receiveFunctions();
 };
