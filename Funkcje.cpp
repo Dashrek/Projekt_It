@@ -105,7 +105,9 @@ void Button::generateFont() {
     al_draw_text(font_1, font_color,(w_offset>0 ? 0 : -w_offset ),(h_offset>0 ? 0 : -h_offset),ALLEGRO_ALIGN_LEFT,name.c_str());
     al_destroy_font(font_1);
 }
-
+void Button::take_event() {
+    checkevent();
+}
 Button::~Button() {
 
 }

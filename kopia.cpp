@@ -12,8 +12,8 @@ int main()
     al_init_ttf_addon();
     // ===== KLUCZOWE FLAGI OKNA =====
     al_set_new_display_flags(
-        ALLEGRO_RESIZABLE |
-        ALLEGRO_WINDOWED
+            ALLEGRO_RESIZABLE |
+            ALLEGRO_WINDOWED
     );
     ALLEGRO_DISPLAY* display = al_create_display(800, 600);
     if (!display)
@@ -48,9 +48,9 @@ int main()
         // ===== RENDER =====
         al_clear_to_color(al_map_rgb(30, 30, 40));
         al_draw_rectangle(10, 10,
-                           static_cast<float>(al_get_display_width(display)) - 10,
-                           static_cast<float>(al_get_display_height(display)) - 10.f,
-                           al_map_rgb(200, 200, 255), 2);
+                          static_cast<float>(al_get_display_width(display)) - 10,
+                          static_cast<float>(al_get_display_height(display)) - 10.f,
+                          al_map_rgb(200, 200, 255), 2);
         al_flip_display();
     }
     al_destroy_event_queue(queue);

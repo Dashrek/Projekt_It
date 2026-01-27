@@ -10,6 +10,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
 #include <math.h>
+#include <functional>
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
@@ -60,10 +61,11 @@ class Button{
     ALLEGRO_COLOR font_color,font_shadow_color;
     ALLEGRO_BITMAP* ShadowFont;
     shared_ptr<ButtonParameters> param;
+    function <void()> checkevent;
 
 public:
     Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
-
+    void take_event();
     ~Button();
 private:
     void extractPosition(const vector<string>& res);
