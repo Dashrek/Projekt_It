@@ -108,6 +108,11 @@ void Button::generateFont() {
 void Button::take_event() {
     checkevent();
 }
+
+void Button::build() {
+
+}
+
 Button::~Button() {
 
 }

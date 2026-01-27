@@ -55,6 +55,7 @@ class ButtonFactory {
     void createRectangle(shared_ptr<ButtonParameters> p);
     };
 class Button{
+    //aspekty wizualne
     string name;
     string posx, posy;
     string fontsize,font;
@@ -62,7 +63,9 @@ class Button{
     ALLEGRO_BITMAP* ShadowFont;
     shared_ptr<ButtonParameters> param;
     function <void()> checkevent;
-
+    //aspekty logiczne
+    //wybór trybu wyświetlenia
+    bool tryb[2];
 public:
     Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
     void take_event();
@@ -70,6 +73,7 @@ public:
 private:
     void extractPosition(const vector<string>& res);
     void generateFont();
+    void build(ALLEGRO_BITMAP*& Obraz, A);
 };
 class Page{
     vector<unique_ptr<Button>> buttons;
