@@ -111,16 +111,17 @@ void Button::take_event() {
 
 void Button::build(ALLEGRO_BITMAP* Obraz) {
     int posix,posiy;
-    posix=actual_value(posx);
+    posix=actual_value(posx)-(al_get_bitmap_width(param->images->normal)-abs(actual_value(param->shadow_offset_x)))/2;
     posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));
-    posix-=actual_value(param->border_thickness);
-    posiy=actual_value(posy);
+    posiy=actual_value(posy)-(al_get_bitmap_height(param->images->normal)-abs(actual_value(param->shadow_offset_y)))/2;
     posiy+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
-    posiy-=actual_value(param->border_thickness);
     al_draw_bitmap((!tryb[0] && !tryb[1] ? param->images->normal:(tryb[0] && !tryb[1] ? param->images->hover : param->images->pressed)),
                    posix, posiy,0);
-    posix+=actual_value(param->);
-    al_draw_bitmap(ShadowFont, );
+    posix=actual_value(posx)-(al_get_bitmap_width(ShadowFont)-actual_value(param->shadow_offset_x))/2;
+    posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));
+    posiy=actual_value(posy)-(al_get_bitmap_height(ShadowFont)-actual_value(param->shadow_offset_y))/2;
+    posix+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
+    al_draw_bitmap(ShadowFont, posix, posiy,0);
 }
 
 Button::~Button() {
