@@ -109,8 +109,18 @@ void Button::take_event() {
     checkevent();
 }
 
-void Button::build() {
-
+void Button::build(ALLEGRO_BITMAP* Obraz) {
+    int posix,posiy;
+    posix=actual_value(posx);
+    posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));
+    posix-=actual_value(param->border_thickness);
+    posiy=actual_value(posy);
+    posiy+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
+    posiy-=actual_value(param->border_thickness);
+    al_draw_bitmap((!tryb[0] && !tryb[1] ? param->images->normal:(tryb[0] && !tryb[1] ? param->images->hover : param->images->pressed)),
+                   posix, posiy,0);
+    posix+=actual_value(param->);
+    al_draw_bitmap(ShadowFont, );
 }
 
 Button::~Button() {

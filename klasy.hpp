@@ -73,7 +73,7 @@ public:
 private:
     void extractPosition(const vector<string>& res);
     void generateFont();
-    void build(ALLEGRO_BITMAP*& Obraz, A);
+    void build(ALLEGRO_BITMAP* Obraz);
 };
 class Page{
     vector<unique_ptr<Button>> buttons;
