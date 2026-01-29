@@ -109,14 +109,31 @@ void Button::take_event() {
     checkevent();
 }
 
-void Button::build(ALLEGRO_BITMAP* Obraz) {
+void Button::build(ALLEGRO_BITMAP* Obraz, ALLEGRO_BITMAP* dzialki, int color) {
     int posix,posiy;
-    posix=actual_value(posx)-(al_get_bitmap_width(param->images->normal)-abs(actual_value(param->shadow_offset_x)))/2;
-    posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));
-    posiy=actual_value(posy)-(al_get_bitmap_height(param->images->normal)-abs(actual_value(param->shadow_offset_y)))/2;
-    posiy+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
+    int k,l,off_y,off_x;
+    k=al_get_bitmap_width(param->images->normal);
+    l=al_get_bitmap_height(param->images->normal);
+    off_x=actual_value(param->shadow_offset_x);
+    off_y=actual_value(param->shadow_offset_y);
+    posix=actual_value(posx)-(k-abs(off_x))/2;
+    posix+=(off_x>0 ? 0 : off_x);
+    posiy=actual_value(posy)-(l-abs(off_y))/2;
+    posiy+=(off_y>0 ? 0 : off_y);
     al_draw_bitmap((!tryb[0] && !tryb[1] ? param->images->normal:(tryb[0] && !tryb[1] ? param->images->hover : param->images->pressed)),
                    posix, posiy,0);
+    ALLEGRO_LOCKED_REGION *reg = al_lock_bitmap(dzialki, ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_WRITEONLY);
+    unsigned char* tablica = (unsigned char*)reg->data;
+    int kon_x=posix+(k-abs(off_x));
+    int kon_y=posiy+(l-abs(off_x));
+    for (int i=posix;i<kon_x;i++){
+        for(int j=posiy;j<kon_y;j++){
+            int index = j * reg->pitch + i;
+            tablica[index]=color;
+        }
+    }
+    al_unlock_bitmap(dzialki);
+    tablica=nullptr;
     posix=actual_value(posx)-(al_get_bitmap_width(ShadowFont)-actual_value(param->shadow_offset_x))/2;
     posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));
     posiy=actual_value(posy)-(al_get_bitmap_height(ShadowFont)-actual_value(param->shadow_offset_y))/2;
