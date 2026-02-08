@@ -4,15 +4,23 @@
 
 
 #include "klasy.hpp"
-int actual_value(const string &value) {//funkcja zmieniająca wartości typowo html na piksele
-    if (value=="") return 0;
-    if (value.find("vh")) {
-        return static_cast<int>(static_cast<float>(stoi(split_manual(value, "vh")[0])) / 100.0f * static_cast<float>(screen_height));
-    }if (value.find("vw")) {
-        return static_cast<int>(static_cast<float>(stoi(split_manual(value, "vw")[0])) / 100.0f * static_cast<float>(screen_width));
-    }if (value.find("px")) {
-        return stoi(split_manual(value,"px")[0]);
+int actual_value(const string &value) {
+    if (value.empty()) return 0;
+
+    if (value.find("vh") != string::npos) {
+        return static_cast<int>(
+                std::stof(split_manual(value, "vh")[0]) / 100.0f * screen_height
+        );
     }
+    else if (value.find("vw") != string::npos) {
+        return static_cast<int>(
+                std::stof(split_manual(value, "vw")[0]) / 100.0f * screen_width
+        );
+    }
+    else if (value.find("px") != string::npos) {
+        return std::stoi(split_manual(value, "px")[0]);
+    }
+
     return -1;
 }
 ALLEGRO_COLOR f_HTML(string html_color) {//funkcja konwertująca kolor html na kolor w wersji zwykłej + alpha
@@ -57,59 +65,147 @@ void Button::extractPosition(const vector<string>& res) {
         if (k[0]=="font-shadow") font_shadow_color=f_HTML(k[1]); //kolor cienia fontu w html
     }
 }
-void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h){
-    int t[3][3]={{1,2,1},{2,4,2},{1,2,1}};
-    ALLEGRO_LOCKED_REGION *reg = al_lock_bitmap(Target, ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_WRITEONLY);
-    for(int j=1;j<h-1;j++){
-        uint8_t *ptr = (uint8_t *)reg->data + j * reg->pitch;
-        ptr+=4;
-        for(int i=1; i<w-1; i++){
-            int r=0;int g=0; int b=0;int a=0;
-            for (int k=-1;k<2;k++){
-                for(int l=-1;l<2;l++){
-                    ALLEGRO_COLOR bl= al_get_pixel(Source,i+k,j+l);
-                    r+=bl.r*t[i][j];
-                    g+=bl.g*t[i][j];
-                    b+=bl.b*t[i][j];
-                    a=(bl.a>a ? bl.a : a);
+
+Page::Page(){
+    aktualny_klucz=1;
+    aktywny_przycisk= -1;
+}
+
+void Page::addButton(ButtonFactory &factory, string styleID, string nam, const vector<string> &font_h,
+                     const vector<string> &res, const vector<ALLEGRO_COLOR> &col) {
+    buttons[aktualny_klucz]= make_unique<Button>(factory, styleID,font_h, res,col, nam);
+    aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
+}
+void Page::buildButtons(ALLEGRO_DISPLAY *obraz, ALLEGRO_BITMAP * dzialki) {
+    for (auto const& [klucz, przycisk] : buttons) {
+        przycisk->build(dzialki,klucz);
+    }
+    al_set_target_backbuffer(obraz);
+}
+void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h) {
+    // Wymuszamy format 32-bitowy, aby przesunięcia bitowe (<<) działały przewidywalnie
+    ALLEGRO_LOCKED_REGION *src_reg = al_lock_bitmap(Source, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READONLY);
+    ALLEGRO_LOCKED_REGION *dst_reg = al_lock_bitmap(Target, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_WRITEONLY);
+
+    int t[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+    int div = 16; // Suma wag macierzy
+
+    for (int j = 1; j < h - 1; j++) {
+        // Obliczamy wskaźnik do początku wiersza w obu bitmapach
+        uint32_t *dst_ptr = (uint32_t*)((uint8_t*)dst_reg->data + j * dst_reg->pitch);
+
+        for (int i = 1; i < w - 1; i++) {
+            int r = 0, g = 0, b = 0, a = 0;
+
+            for (int ky = -1; ky <= 1; ky++) {
+                // Wskaźnik do wiersza źródłowego dla splotu
+                uint32_t *src_row = (uint32_t*)((uint8_t*)src_reg->data + (j + ky) * src_reg->pitch);
+                for (int kx = -1; kx <= 1; kx++) {
+                    uint32_t pixel = src_row[i + kx];
+                    int weight = t[kx + 1][ky + 1];
+
+                    // Wyciąganie składowych z formatu ABGR_8888_LE
+                    r += (pixel & 0xFF) * weight;
+                    g += ((pixel >> 8) & 0xFF) * weight;
+                    b += ((pixel >> 16) & 0xFF) * weight;
+                    a += ((pixel >> 24) & 0xFF) * weight;
                 }
             }
-            r/=12;g/=12;b/=12;
-            *((uint32_t *)ptr) = (r | (g << 8) | (b << 16) | (a << 24));
-            ptr+=4;
+
+            // Zapisujemy przetworzony piksel (dzielenie przez sumę wag)
+            dst_ptr[i] = (r / div) | ((g / div) << 8) | ((b / div) << 16) | ((a / div) << 24);
         }
     }
+
+    al_unlock_bitmap(Source);
     al_unlock_bitmap(Target);
 }
-void Button::generateFont() {
-    ALLEGRO_FONT* font_1=al_load_ttf_font(font.c_str(),actual_value(fontsize),0);
-    int w = al_get_text_width(font_1, name.c_str());
-    int h = al_get_font_line_height(font_1);
+ButtonFactory::ButtonFactory() {
+
+}
+bool BakeFontToMemoryBitmap(
+        ALLEGRO_BITMAP* dest,
+        ALLEGRO_FONT* font,
+        const std::string& text,
+        ALLEGRO_COLOR color,
+        int x,
+        int y
+) {
+    if (!dest || !font) return false;
+
+    if (!al_get_current_display()) return false;
+
+    int w = al_get_bitmap_width(dest);
+    int h = al_get_bitmap_height(dest);
+    if (w <= 0 || h <= 0) return false;
+
+    ALLEGRO_BITMAP* prev = al_get_target_bitmap();
+    int old_flags = al_get_new_bitmap_flags();
+    // VIDEO temp
     al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
+    ALLEGRO_BITMAP* video = al_create_bitmap(w, h);
+    if (!video) return false;
+
+    al_set_target_bitmap(video);
+    al_clear_to_color(al_map_rgba(0,0,0,0));
+    al_draw_text(font, color, x, y, 0, text.c_str());
+
+    // copy → MEMORY
+    al_set_target_bitmap(dest);
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+    al_draw_bitmap(video, 0, 0, 0);
+
+    al_set_target_bitmap(prev);
+    al_set_new_bitmap_flags(old_flags);
+    al_destroy_bitmap(video);
+
+    return true;
+}
+void Button::generateFont() {
+    Font=al_load_ttf_font(font.c_str(),actual_value(fontsize),0);
+    /*int w = al_get_text_width(Font, name.c_str());
+    int h = al_get_font_line_height(font_1);
+    al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
     al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
     int w_offset=actual_value(param->shadow_offset_x);
     w_offset+=(w_offset==0 ? 0 : (w_offset<0 ? -1 : 1));
     int h_offset=actual_value(param->shadow_offset_y);
     h_offset+=(h_offset==0 ? 0 : (h_offset<0 ? -1 : 1));
     ALLEGRO_BITMAP* bi=nullptr;
+    ShadowFont=al_create_bitmap(w+abs(w_offset) ,h+ abs(h_offset));
+    al_set_target_bitmap(ShadowFont);
+    al_clear_to_color(al_map_rgba(0,0,0,0));
     if(w_offset!=0 || h_offset!=0) {
         bi = al_create_bitmap(w + abs(w_offset), h + abs(h_offset));
         al_set_target_bitmap(bi);
         al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-        al_draw_text(font_1, font_shadow_color,(w_offset>0 ? w_offset : 0 ),(h_offset>0 ? h_offset :0),ALLEGRO_ALIGN_LEFT,name.c_str());
+        //al_draw_text(font_1, font_shadow_color,(w_offset>0 ? w_offset : 0 ),(h_offset>0 ? h_offset :0),ALLEGRO_ALIGN_LEFT,name.c_str());
+        cout << BakeFontToMemoryBitmap(bi,font_1,name.c_str(),font_shadow_color,(w_offset>0 ? w_offset : 0 ),(h_offset>0 ? h_offset :0));
+        AllegroGaussFilter(bi,ShadowFont,w+abs(w_offset),h+abs(h_offset));
+        al_destroy_bitmap(bi);
     }
-    ShadowFont=al_create_bitmap(w+abs(w_offset) ,h+ abs(h_offset));
-    AllegroGaussFilter(bi,ShadowFont,w+abs(w_offset),h+abs(h_offset));
-    al_destroy_bitmap(bi);
     al_set_target_bitmap(ShadowFont);
-    al_draw_text(font_1, font_color,(w_offset>0 ? 0 : -w_offset ),(h_offset>0 ? 0 : -h_offset),ALLEGRO_ALIGN_LEFT,name.c_str());
-    al_destroy_font(font_1);
+    cout << BakeFontToMemoryBitmap(ShadowFont,font_1,name.c_str(),font_color,(w_offset>0 ? 0 : -w_offset ),(h_offset>0 ? 0 : -h_offset));
+    //al_draw_text(font_1, font_color,(w_offset>0 ? 0 : -w_offset ),(h_offset>0 ? 0 : -h_offset),ALLEGRO_ALIGN_LEFT,name.c_str());
+    al_destroy_font(font_1);*/
+}
+void Button::hover(){
+    tryb[0]=true;
+    tryb[1]=false;
+};
+void Button::pressed(){
+    tryb[0]=true;
+    tryb[1]=true;
+}
+void Button::normal(){
+    tryb[0]=false;
+    tryb[1]=false;
 }
 void Button::take_event() {
     checkevent();
 }
 
-void Button::build(ALLEGRO_BITMAP* Obraz, ALLEGRO_BITMAP* dzialki, int color) {
+void Button::build(ALLEGRO_BITMAP* dzialki, int color) {
     int posix,posiy;
     int k,l,off_y,off_x;
     k=al_get_bitmap_width(param->images->normal);
@@ -120,6 +216,7 @@ void Button::build(ALLEGRO_BITMAP* Obraz, ALLEGRO_BITMAP* dzialki, int color) {
     posix+=(off_x>0 ? 0 : off_x);
     posiy=actual_value(posy)-(l-abs(off_y))/2;
     posiy+=(off_y>0 ? 0 : off_y);
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
     al_draw_bitmap((!tryb[0] && !tryb[1] ? param->images->normal:(tryb[0] && !tryb[1] ? param->images->hover : param->images->pressed)),
                    posix, posiy,0);
     ALLEGRO_LOCKED_REGION *reg = al_lock_bitmap(dzialki, ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_WRITEONLY);
@@ -134,11 +231,14 @@ void Button::build(ALLEGRO_BITMAP* Obraz, ALLEGRO_BITMAP* dzialki, int color) {
     }
     al_unlock_bitmap(dzialki);
     tablica=nullptr;
+
+    /*
     posix=actual_value(posx)-(al_get_bitmap_width(ShadowFont)-actual_value(param->shadow_offset_x))/2;
     posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));
     posiy=actual_value(posy)-(al_get_bitmap_height(ShadowFont)-actual_value(param->shadow_offset_y))/2;
-    posix+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
-    al_draw_bitmap(ShadowFont, posix, posiy,0);
+    posiy+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+    al_draw_bitmap(ShadowFont, posix, posiy,0);*/
 }
 
 Button::~Button() {
@@ -163,7 +263,6 @@ shared_ptr<ButtonParameters> ButtonFactory::getOrCreate(string id, const vector<
     //Dla nowego id
     auto p = make_shared<ButtonParameters>();
     p->images = shared_ptr<ButtonImage>(new ButtonImage(), AllegroImageDeleter);
-
     updateParams(p, res, col);
     styles[id] = p;
     return p;
@@ -211,7 +310,7 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     int m_h= actual_value(p->maxheight);
     w=(w<p_w && p_w<=m_w ? p_w :(w>m_w ? m_w : w) );
     h=(h<p_h && p_h<=m_h ? p_h :(h>m_h ? m_h : h) );
-    al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
+    al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
     al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
     int thic= actual_value(p->border_thickness);
     int w_offset=actual_value(p->shadow_offset_x);
@@ -224,16 +323,18 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     dar.push_back(p->images->pressed);
     ALLEGRO_BITMAP* bi=nullptr;
     for(int i=0; i<3;i++) {
-        if (dar[i]){
+        if (dar[i]!=nullptr){
             al_destroy_bitmap(dar[i]);
         }
     }
     for(int i=0; i<3;i++){
         dar[i]=al_create_bitmap(w + abs(w_offset)+2*thic, h + abs(h_offset)+2*thic);
+        printf("%d %d\n", al_get_bitmap_width(dar[i]), al_get_bitmap_height(dar[i]));
         al_set_target_bitmap(dar[i]);
         al_clear_to_color(al_map_rgba(0, 0, 0, 0));
     }
     if(w_offset!=0 || h_offset!=0) {
+        //cout<<w_offset << " " << h_offset;
         bi = al_create_bitmap(w + abs(w_offset)+2*thic, h + abs(h_offset)+2*thic);
         al_set_target_bitmap(bi);
         al_clear_to_color(al_map_rgba(0, 0, 0, 0));
@@ -264,5 +365,9 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
                                              w+thic+(w_offset>0 ? 0 : -w_offset),h+thic+(h_offset>0 ? 0 : -h_offset),
                                              b_r,b_r,f_HTML("#000000FF"),1.0f);
         }
+
     }
+    p->images->normal=dar[0];
+    p->images->hover=dar[1];
+    p->images->pressed=dar[2];
 }

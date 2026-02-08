@@ -45,14 +45,16 @@ ALLEGRO_COLOR f_HTML(string html_color);
 vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
 void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
+bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
     public:
-    shared_ptr<ButtonParameters> getOrCreate(string id, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
+        ButtonFactory();
+        shared_ptr<ButtonParameters> getOrCreate(string id, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
     private:
-    void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col);
-    void createRectangle(shared_ptr<ButtonParameters> p);
+        void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col);
+        void createRectangle(shared_ptr<ButtonParameters> p);
     };
 class Button{
     //aspekty wizualne
@@ -60,7 +62,7 @@ class Button{
     string posx, posy;
     string fontsize,font;
     ALLEGRO_COLOR font_color,font_shadow_color;
-    ALLEGRO_BITMAP* ShadowFont;
+    ALLEGRO_FONT Font, ShadowFont;
     shared_ptr<ButtonParameters> param;
     function <void()> checkevent;
     //aspekty logiczne
@@ -68,17 +70,25 @@ class Button{
     bool tryb[2];
 public:
     Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    void hover();
+    void pressed();
+    void normal();
     void take_event();
     ~Button();
+    void build(ALLEGRO_BITMAP* dzialki, int color);
 private:
     void extractPosition(const vector<string>& res);
     void generateFont();
-    void build(ALLEGRO_BITMAP* Obraz, ALLEGRO_BITMAP* dzialki, int color);
+
 };
 class Page{
-    vector<unique_ptr<Button>> buttons;
+    map<int,unique_ptr<Button>> buttons;
+    vector<int> cykliczne;
+    int aktualny_klucz;
+    int aktywny_przycisk;
 public:
+    Page();
     void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
-    void buildButtons();
+    void buildButtons(ALLEGRO_DISPLAY *obraz, ALLEGRO_BITMAP* dzialki);
     void receiveFunctions();
 };
