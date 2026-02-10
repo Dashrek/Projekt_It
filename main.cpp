@@ -35,10 +35,10 @@ int main()
 
     auto Baza=new ButtonFactory();
     auto Strona_glowna=new Page();
-    Strona_glowna->addButton(*Baza,"Złoto","Start",
+    Strona_glowna->addButton(*Baza,"Złoto","Nowa gra Solo",
                              {"position-x:50vw",
-                              "position-y:50vh",
-                              "font-size:5vw",
+                              "position-y:20vh",
+                              "font-size:3vw",
                               "font-name:./fonts/orbitron-black.ttf",
                               "font:#FEBD27FF",
                               "font-shadow:#00000050"},{"width:20vw",
@@ -56,6 +56,20 @@ int main()
                               f_HTML("#FEF177"),
                               f_HTML("#F25420"),
                               f_HTML("#000000")});
+    Strona_glowna->addButton(*Baza,"Złoto","Nowa Gra Online",
+                             {"position-x:50vw",
+                              "position-y:50vh",
+                              "font-size:3vw",
+                              "font-name:./fonts/orbitron-black.ttf",
+                              "font:#FEBD27FF",
+                              "font-shadow:#00000050"});
+    Strona_glowna->addButton(*Baza,"Złoto","Nowa Gra rankingowa.",
+                         {"position-x:50vw",
+                          "position-y:80vh",
+                          "font-size:3vw",
+                          "font-name:./fonts/orbitron-black.ttf",
+                          "font:#FEBD27FF",
+                          "font-shadow:#00000050"});
     //al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_SINGLE_CHANNEL_8);
     ALLEGRO_BITMAP *mapa = al_create_bitmap(screen_width, screen_height);
 

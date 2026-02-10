@@ -231,7 +231,10 @@ void Button::build(ALLEGRO_BITMAP* dzialki, int color) {
     }
     al_unlock_bitmap(dzialki);
     tablica=nullptr;
-
+    int w=al_get_text_width(Font,name.c_str());
+    int h=al_get_font_line_height(Font);
+    al_draw_text(Font, font_shadow_color,actual_value(posx)-0.5*w+actual_value(param->shadow_offset_x),actual_value(posy)-0.5*h+actual_value(param->shadow_offset_y),ALLEGRO_ALIGN_LEFT,name.c_str());
+    al_draw_text(Font, font_color,actual_value(posx)-0.5*w,actual_value(posy)-0.5*h,ALLEGRO_ALIGN_LEFT,name.c_str());
     /*
     posix=actual_value(posx)-(al_get_bitmap_width(ShadowFont)-actual_value(param->shadow_offset_x))/2;
     posix+=(actual_value(param->shadow_offset_x)>0 ? 0 : actual_value(param->shadow_offset_x));

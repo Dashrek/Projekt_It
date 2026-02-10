@@ -62,7 +62,6 @@ class Button{
     string posx, posy;
     string fontsize,font;
     ALLEGRO_COLOR font_color,font_shadow_color;
-    ALLEGRO_FONT Font, ShadowFont;
     shared_ptr<ButtonParameters> param;
     function <void()> checkevent;
     //aspekty logiczne
@@ -77,6 +76,8 @@ public:
     ~Button();
     void build(ALLEGRO_BITMAP* dzialki, int color);
 private:
+
+    ALLEGRO_FONT *Font=nullptr, *ShadowFont=nullptr;
     void extractPosition(const vector<string>& res);
     void generateFont();
 
