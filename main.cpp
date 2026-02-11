@@ -41,12 +41,12 @@ int main()
                               "font-size:3vw",
                               "font-name:./fonts/orbitron-black.ttf",
                               "font:#FEBD27FF",
-                              "font-shadow:#00000050"},{"width:20vw",
+                              "font-shadow:#00000050"},{"width:25vw",
                                                         "min-width:20px",
-                                                        "max-width:180px",
+                                                        "max-width:350px",
                                                         "height:15vh",
                                                         "min-height:20px",
-                                                        "max-height:180px",
+                                                        "max-height:200px",
                                                         "border-radius:2px",
                                                         "border-thickness:1px",
                                                         "shadow-offset-x:2px",
@@ -70,8 +70,6 @@ int main()
                           "font-name:./fonts/orbitron-black.ttf",
                           "font:#FEBD27FF",
                           "font-shadow:#00000050"});
-    //al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_SINGLE_CHANNEL_8);
-    ALLEGRO_BITMAP *mapa = al_create_bitmap(screen_width, screen_height);
 
     al_set_window_title(display, "Allegro 5 - Resize / Minimize / Maximize");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -86,7 +84,7 @@ int main()
                           static_cast<float>(al_get_display_width(display)) - 10,
                           static_cast<float>(al_get_display_height(display)) - 10.f,
                           al_map_rgb(200, 200, 255), 2);
-        Strona_glowna->buildButtons(display,mapa);
+        Strona_glowna->buildButtons(display);
         ALLEGRO_EVENT ev;
         al_wait_for_event(queue, &ev);
         switch (ev.type)

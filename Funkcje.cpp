@@ -76,9 +76,9 @@ void Page::addButton(ButtonFactory &factory, string styleID, string nam, const v
     buttons[aktualny_klucz]= make_unique<Button>(factory, styleID,font_h, res,col, nam);
     aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
 }
-void Page::buildButtons(ALLEGRO_DISPLAY *obraz, ALLEGRO_BITMAP * dzialki) {
+void Page::buildButtons(ALLEGRO_DISPLAY *obraz) {
     for (auto const& [klucz, przycisk] : buttons) {
-        przycisk->build(dzialki,klucz);
+        przycisk->build();
     }
     al_set_target_backbuffer(obraz);
 }
@@ -205,7 +205,7 @@ void Button::take_event() {
     checkevent();
 }
 
-void Button::build(ALLEGRO_BITMAP* dzialki, int color) {
+void Button::build() {
     int posix,posiy;
     int k,l,off_y,off_x;
     k=al_get_bitmap_width(param->images->normal);
@@ -219,18 +219,6 @@ void Button::build(ALLEGRO_BITMAP* dzialki, int color) {
     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
     al_draw_bitmap((!tryb[0] && !tryb[1] ? param->images->normal:(tryb[0] && !tryb[1] ? param->images->hover : param->images->pressed)),
                    posix, posiy,0);
-    ALLEGRO_LOCKED_REGION *reg = al_lock_bitmap(dzialki, ALLEGRO_PIXEL_FORMAT_ANY, ALLEGRO_LOCK_WRITEONLY);
-    unsigned char* tablica = (unsigned char*)reg->data;
-    int kon_x=posix+(k-abs(off_x));
-    int kon_y=posiy+(l-abs(off_x));
-    for (int i=posix;i<kon_x;i++){
-        for(int j=posiy;j<kon_y;j++){
-            int index = j * reg->pitch + i;
-            tablica[index]=color;
-        }
-    }
-    al_unlock_bitmap(dzialki);
-    tablica=nullptr;
     int w=al_get_text_width(Font,name.c_str());
     int h=al_get_font_line_height(Font);
     al_draw_text(Font, font_shadow_color,actual_value(posx)-0.5*w+actual_value(param->shadow_offset_x),actual_value(posy)-0.5*h+actual_value(param->shadow_offset_y),ALLEGRO_ALIGN_LEFT,name.c_str());
@@ -245,8 +233,10 @@ void Button::build(ALLEGRO_BITMAP* dzialki, int color) {
 }
 
 Button::~Button() {
-
+ if (Font!=nullptr) al_destroy_font(Font);
+ if (ShadowFont!=nullptr) al_destroy_font(ShadowFont);
 }
+
 void AllegroImageDeleter(ButtonImage* bi) {
     if (bi) {
         if (bi->normal)  al_destroy_bitmap(bi->normal);

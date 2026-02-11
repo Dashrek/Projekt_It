@@ -69,12 +69,13 @@ class Button{
     bool tryb[2];
 public:
     Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+
     void hover();
     void pressed();
     void normal();
     void take_event();
     ~Button();
-    void build(ALLEGRO_BITMAP* dzialki, int color);
+    void build();
 private:
 
     ALLEGRO_FONT *Font=nullptr, *ShadowFont=nullptr;
@@ -90,6 +91,6 @@ class Page{
 public:
     Page();
     void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
-    void buildButtons(ALLEGRO_DISPLAY *obraz, ALLEGRO_BITMAP* dzialki);
+    void buildButtons(ALLEGRO_DISPLAY *obraz);
     void receiveFunctions();
 };
