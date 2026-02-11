@@ -52,6 +52,7 @@ class ButtonFactory {
     public:
         ButtonFactory();
         shared_ptr<ButtonParameters> getOrCreate(string id, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
+        void ReCreateRectangle();
     private:
         void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col);
         void createRectangle(shared_ptr<ButtonParameters> p);
@@ -76,12 +77,10 @@ public:
     void take_event();
     ~Button();
     void build();
-private:
-
-    ALLEGRO_FONT *Font=nullptr, *ShadowFont=nullptr;
-    void extractPosition(const vector<string>& res);
     void generateFont();
-
+private:
+    ALLEGRO_FONT *Font=nullptr;
+    void extractPosition(const vector<string>& res);
 };
 class Page{
     map<int,unique_ptr<Button>> buttons;
@@ -92,5 +91,6 @@ public:
     Page();
     void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
     void buildButtons(ALLEGRO_DISPLAY *obraz);
+    void ReloadFont();//ponowne załadowanie czcionki
     void receiveFunctions();
 };

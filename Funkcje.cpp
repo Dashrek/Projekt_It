@@ -70,7 +70,11 @@ Page::Page(){
     aktualny_klucz=1;
     aktywny_przycisk= -1;
 }
-
+void Page::ReloadFont() {
+    for (auto const& [klucz, przycisk] : buttons) {
+        przycisk->generateFont();
+    }
+}
 void Page::addButton(ButtonFactory &factory, string styleID, string nam, const vector<string> &font_h,
                      const vector<string> &res, const vector<ALLEGRO_COLOR> &col) {
     buttons[aktualny_klucz]= make_unique<Button>(factory, styleID,font_h, res,col, nam);
@@ -162,32 +166,8 @@ bool BakeFontToMemoryBitmap(
     return true;
 }
 void Button::generateFont() {
+    if(Font) al_destroy_font(Font);
     Font=al_load_ttf_font(font.c_str(),actual_value(fontsize),0);
-    /*int w = al_get_text_width(Font, name.c_str());
-    int h = al_get_font_line_height(font_1);
-    al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
-    al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
-    int w_offset=actual_value(param->shadow_offset_x);
-    w_offset+=(w_offset==0 ? 0 : (w_offset<0 ? -1 : 1));
-    int h_offset=actual_value(param->shadow_offset_y);
-    h_offset+=(h_offset==0 ? 0 : (h_offset<0 ? -1 : 1));
-    ALLEGRO_BITMAP* bi=nullptr;
-    ShadowFont=al_create_bitmap(w+abs(w_offset) ,h+ abs(h_offset));
-    al_set_target_bitmap(ShadowFont);
-    al_clear_to_color(al_map_rgba(0,0,0,0));
-    if(w_offset!=0 || h_offset!=0) {
-        bi = al_create_bitmap(w + abs(w_offset), h + abs(h_offset));
-        al_set_target_bitmap(bi);
-        al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-        //al_draw_text(font_1, font_shadow_color,(w_offset>0 ? w_offset : 0 ),(h_offset>0 ? h_offset :0),ALLEGRO_ALIGN_LEFT,name.c_str());
-        cout << BakeFontToMemoryBitmap(bi,font_1,name.c_str(),font_shadow_color,(w_offset>0 ? w_offset : 0 ),(h_offset>0 ? h_offset :0));
-        AllegroGaussFilter(bi,ShadowFont,w+abs(w_offset),h+abs(h_offset));
-        al_destroy_bitmap(bi);
-    }
-    al_set_target_bitmap(ShadowFont);
-    cout << BakeFontToMemoryBitmap(ShadowFont,font_1,name.c_str(),font_color,(w_offset>0 ? 0 : -w_offset ),(h_offset>0 ? 0 : -h_offset));
-    //al_draw_text(font_1, font_color,(w_offset>0 ? 0 : -w_offset ),(h_offset>0 ? 0 : -h_offset),ALLEGRO_ALIGN_LEFT,name.c_str());
-    al_destroy_font(font_1);*/
 }
 void Button::hover(){
     tryb[0]=true;
@@ -234,7 +214,7 @@ void Button::build() {
 
 Button::~Button() {
  if (Font!=nullptr) al_destroy_font(Font);
- if (ShadowFont!=nullptr) al_destroy_font(ShadowFont);
+
 }
 
 void AllegroImageDeleter(ButtonImage* bi) {
@@ -293,8 +273,24 @@ void ButtonFactory::updateParams(shared_ptr<ButtonParameters> p, const vector<st
     }
     createRectangle(p);
 }
+void ButtonFactory::ReCreateRectangle() {
+    for(const auto& [name, param] : styles){
+        createRectangle(param);
+    }
+}
 void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
-
+    if (p->images->normal) {
+        al_destroy_bitmap(p->images->normal);
+        p->images->normal= nullptr;
+    }
+    if (p->images->hover) {
+        al_destroy_bitmap(p->images->hover);
+        p->images->hover= nullptr;
+    }
+    if (p->images->hover) {
+        al_destroy_bitmap(p->images->pressed);
+        p->images->pressed= nullptr;
+    }
     int w= actual_value(p->width);
     int p_w= actual_value(p->minwidth);
     int m_w= actual_value(p->maxwidth);
@@ -315,11 +311,6 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     dar.push_back(p->images->hover);
     dar.push_back(p->images->pressed);
     ALLEGRO_BITMAP* bi=nullptr;
-    for(int i=0; i<3;i++) {
-        if (dar[i]!=nullptr){
-            al_destroy_bitmap(dar[i]);
-        }
-    }
     for(int i=0; i<3;i++){
         dar[i]=al_create_bitmap(w + abs(w_offset)+2*thic, h + abs(h_offset)+2*thic);
         printf("%d %d\n", al_get_bitmap_width(dar[i]), al_get_bitmap_height(dar[i]));

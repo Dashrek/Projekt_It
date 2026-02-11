@@ -98,6 +98,8 @@ int main()
                 screen_width = al_get_display_width(display);
                 screen_height = al_get_display_height(display);
                 printf("Resize: %dx%d\n", screen_width, screen_height);
+                Strona_glowna->ReloadFont();
+                Baza->ReCreateRectangle();
                 break;
             case ALLEGRO_EVENT_KEY_DOWN:
                 if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
