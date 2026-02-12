@@ -54,6 +54,20 @@ Button::Button(ButtonFactory& factory, string styleID, const vector<string>& fon
         generateFont();
 
 }
+Button::Button(const Button& Inny, ButtonFactory& factory,const string nazwa, const string pos_x, const string pos_y):
+        name(nazwa),
+        posx(pos_x),
+        posy(pos_y),
+        fontsize(Inny.fontsize),
+        font(Inny.font),
+        fontmaxwidth(Inny.fontmaxwidth),
+        fontminwidth(Inny.fontminwidth),
+        font_color(Inny.font_color),
+        font_shadow_color(Inny.font_shadow_color),
+        param(Inny.param)
+{
+    generateFont();
+}
 void Button::extractPosition(const vector<string>& res) {
     for (auto i : res) {
         vector<string> k = split_manual(i, ":");
@@ -80,6 +94,10 @@ void Page::ReloadFont() {
 void Page::addButton(ButtonFactory &factory, string styleID, string nam, const vector<string> &font_h,
                      const vector<string> &res, const vector<ALLEGRO_COLOR> &col) {
     buttons[aktualny_klucz]= make_unique<Button>(factory, styleID,font_h, res,col, nam);
+    aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
+}
+void Page::addButton(ButtonFactory &factory,const Button & Inny, const string nazwa,const string pos_x, const string pos_y) {
+    buttons[aktualny_klucz]= make_unique<Button>(Inny,factory,nazwa,pos_x,pos_y);
     aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
 }
 void Page::buildButtons(ALLEGRO_DISPLAY *obraz) {
@@ -126,6 +144,7 @@ void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, i
     al_unlock_bitmap(Source);
     al_unlock_bitmap(Target);
 }
+
 ButtonFactory::ButtonFactory() {
 
 }

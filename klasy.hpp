@@ -70,7 +70,7 @@ class Button{
     bool tryb[2];
 public:
     Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
-
+    Button(const Button& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);
     void hover();
     void pressed();
     void normal();
@@ -83,13 +83,16 @@ private:
     void extractPosition(const vector<string>& res);
 };
 class Page{
-    map<int,unique_ptr<Button>> buttons;
     vector<int> cykliczne;
-    int aktualny_klucz;
     int aktywny_przycisk;
+
+    int aktualny_klucz;
 public:
+    const int getKlucz() const{return aktualny_klucz;};
+    map<int,unique_ptr<Button>> buttons;
     Page();
     void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
+    void addButton(ButtonFactory &factory,const Button & Inny, const string nazwa,const string pos_x, const string pos_y);
     void buildButtons(ALLEGRO_DISPLAY *obraz);
     void ReloadFont();//ponowne załadowanie czcionki
     void receiveFunctions();

@@ -38,7 +38,7 @@ int main()
     Strona_glowna->addButton(*Baza,"Złoto","Nowa gra Solo",
                              {"position-x:50vw",
                               "position-y:20vh",
-                              "font-size:3vh",
+                              "font-size:3vw",
                                  "font-maxwidth:340px",
                               "font-name:./fonts/orbitron-black.ttf",
                               "font:#FEBD27FF",
@@ -57,22 +57,17 @@ int main()
                               f_HTML("#FEF177"),
                               f_HTML("#F25420"),
                               f_HTML("#000000")});
-    Strona_glowna->addButton(*Baza,"Złoto","Nowa Gra Online",
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Nowa Gra Online","50vw", "50vh");
+    /*Strona_glowna->addButton(*Baza,"Złoto","Nowa Gra Online",
                              {"position-x:50vw",
                               "position-y:50vh",
-                              "font-size:3vh",
+                              "font-size:3vw",
                                  "font-maxwidth:340px",
                               "font-name:./fonts/orbitron-black.ttf",
                               "font:#FEBD27FF",
-                              "font-shadow:#00000050"});
-    Strona_glowna->addButton(*Baza,"Złoto","Gra Rankingowa.",
-                         {"position-x:50vw",
-                          "position-y:80vh",
-                          "font-size:3vh",
-                             "font-maxwidth:340px",
-                          "font-name:./fonts/orbitron-black.ttf",
-                          "font:#FEBD27FF",
-                          "font-shadow:#00000050"});
+                              "font-shadow:#00000050"});*/
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Gra Rankingowa","50vw", "80vh");
+
 
     al_set_window_title(display, "Allegro 5 - Resize / Minimize / Maximize");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
