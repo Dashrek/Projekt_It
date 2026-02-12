@@ -63,6 +63,8 @@ void Button::extractPosition(const vector<string>& res) {
         if (k[0]=="font-name") font=k[1];//path czcionki
         if (k[0]=="font") font_color=f_HTML(k[1]); //kolor fontu w html
         if (k[0]=="font-shadow") font_shadow_color=f_HTML(k[1]); //kolor cienia fontu w html
+        if (k[0]=="font-maxwidth") fontmaxwidth=k[1];
+        if (k[0]=="font-minwidth") fontminwidth=k[1];
     }
 }
 
@@ -166,8 +168,23 @@ bool BakeFontToMemoryBitmap(
     return true;
 }
 void Button::generateFont() {
+    int fontsizer=actual_value(fontsize);
+    if (fontmaxwidth=="") fontmaxwidth="100vh";
+    int w;
+    Start:
     if(Font) al_destroy_font(Font);
-    Font=al_load_ttf_font(font.c_str(),actual_value(fontsize),0);
+    Font=al_load_ttf_font(font.c_str(),fontsizer,0);
+    w=al_get_text_width(Font,name.c_str());
+    if (w>actual_value(fontmaxwidth) && w<actual_value(fontminwidth)) {
+        return;
+    }else if (w>actual_value(fontmaxwidth)) {
+        fontsizer--;
+        goto Start;
+    }else if (w<actual_value(fontminwidth)) {
+        fontsizer++;
+        goto Start;
+    }
+
 }
 void Button::hover(){
     tryb[0]=true;

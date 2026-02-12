@@ -61,7 +61,7 @@ class Button{
     //aspekty wizualne
     string name;
     string posx, posy;
-    string fontsize,font;
+    string fontsize,font,fontmaxwidth,fontminwidth;
     ALLEGRO_COLOR font_color,font_shadow_color;
     shared_ptr<ButtonParameters> param;
     function <void()> checkevent;
