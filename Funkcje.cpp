@@ -314,6 +314,19 @@ void ButtonFactory::ReCreateRectangle() {
         createRectangle(param);
     }
 }
+
+void Page::createBitmap() {
+    ALLEGRO_BITMAP * old=al_get_target_bitmap();
+    al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_SINGLE_CHANNEL_8);
+    if (przyciski) {
+        al_destroy_bitmap(przyciski);
+        przyciski=nullptr;
+    }
+    przyciski=al_create_bitmap();
+}
+
+
+
 void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     if (p->images->normal) {
         al_destroy_bitmap(p->images->normal);
