@@ -77,6 +77,7 @@ public:
     void take_event();
     ~Button();
     void build();
+    void draw(ALLEGRO_COLOR color);
     void generateFont();
 private:
     ALLEGRO_FONT *Font=nullptr;

@@ -220,7 +220,20 @@ void Button::normal(){
 void Button::take_event() {
     checkevent();
 }
-
+void Button::draw(ALLEGRO_COLOR  color){
+    int posix,posiy;
+    posix= actual_value(posx);
+    posiy= actual_value(posy);
+    int w= actual_value(param->width);
+    int p_w= actual_value(param->minwidth);
+    int m_w= actual_value(param->maxwidth);
+    int h= actual_value(param->height);
+    int p_h= actual_value(param->minheight);
+    int m_h= actual_value(param->maxheight);
+    w=(w<p_w && p_w<=m_w ? p_w :(w>m_w ? m_w : w) );
+    h=(h<p_h && p_h<=m_h ? p_h :(h>m_h ? m_h : h) );
+    al_draw_filled_rectangle(posix-w/2,posiy-h/2,posix+w-w/2,posiy+h-h/2,color);
+}
 void Button::build() {
     int posix,posiy;
     int k,l,off_y,off_x;
@@ -322,7 +335,12 @@ void Page::createBitmap() {
         al_destroy_bitmap(przyciski);
         przyciski=nullptr;
     }
-    przyciski=al_create_bitmap();
+    przyciski=al_create_bitmap(screen_width,screen_height);
+    al_set_target_bitmap(przyciski);
+    for (auto const& [klucz, przycisk] : buttons) {
+        przycisk->draw(al_map_rgba(klucz,klucz,klucz,255));
+    }
+    al_set_target_bitmap(old);
 }
 
 
