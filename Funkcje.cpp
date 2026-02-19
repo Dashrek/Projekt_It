@@ -331,15 +331,12 @@ void Page::hover(int x, int y ){
     ALLEGRO_COLOR punkt=al_get_pixel(przyciski,x,y);
     unsigned char r, g, b, a;
     al_unmap_rgba(punkt, &r, &g, &b, &a);
-    cout << (int)r <<" "<< (int)g<<" " << (int)b << " " << (int)a << "\n";
     int ri=(int)r;
-    cout<< ri << " " << aktywny_przycisk;
     if (ri!=aktywny_przycisk) {
         if (aktywny_przycisk!=0) {
             buttons[aktywny_przycisk]->normal();
         }
         aktywny_przycisk=ri;
-        cout << ri;
         if (aktywny_przycisk!=0) {
             buttons[aktywny_przycisk]->hover();
         }
@@ -347,7 +344,6 @@ void Page::hover(int x, int y ){
 }
 void Page::createBitmap() {
     ALLEGRO_BITMAP * old=al_get_target_bitmap();
-    al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_SINGLE_CHANNEL_8);
     if (przyciski) {
         al_destroy_bitmap(przyciski);
         przyciski=nullptr;
@@ -355,7 +351,7 @@ void Page::createBitmap() {
     przyciski=al_create_bitmap(screen_width,screen_height);
     al_set_target_bitmap(przyciski);
     for (auto const& [klucz, przycisk] : buttons) {
-        przycisk->draw(al_map_rgba(klucz,klucz,klucz,255));
+        przycisk->draw(al_map_rgba(klucz,0,0,255));
     }
     al_set_target_bitmap(old);
 }
@@ -397,7 +393,6 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     ALLEGRO_BITMAP* bi=nullptr;
     for(int i=0; i<3;i++){
         dar[i]=al_create_bitmap(w + abs(w_offset)+2*thic, h + abs(h_offset)+2*thic);
-        printf("%d %d\n", al_get_bitmap_width(dar[i]), al_get_bitmap_height(dar[i]));
         al_set_target_bitmap(dar[i]);
         al_clear_to_color(al_map_rgba(0, 0, 0, 0));
     }

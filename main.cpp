@@ -50,7 +50,7 @@ int main()
                                                         "min-height:20px",
                                                         "max-height:200px",
                                                         "border-radius:2px",
-                                                        "border-thickness:1px",
+                                                        "border-thickness:0.5vw",
                                                         "shadow-offset-x:2px",
                                                         "shadow-offset-y:2px"},
                              {f_HTML("#C8B5B5"),
@@ -69,52 +69,68 @@ int main()
                               "font-shadow:#00000050"});*/
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Gra Rankingowa","50vw", "80vh");
 
-
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     al_set_window_title(display, "Allegro 5 - Resize / Minimize / Maximize");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     al_register_event_source(queue, al_get_display_event_source(display));
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_mouse_event_source());
+    al_register_event_source(queue, al_get_timer_event_source(timer));
+    al_start_timer(timer);
     bool running = true;
-    while (running)
-    {
-        al_set_target_backbuffer(display);
-        al_clear_to_color(al_map_rgb(30, 30, 40));
-        al_draw_rectangle(10, 10,
-                          static_cast<float>(al_get_display_width(display)) - 10,
-                          static_cast<float>(al_get_display_height(display)) - 10.f,
-                          al_map_rgb(200, 200, 255), 2);
-        Strona_glowna->buildButtons(display);
-        Strona_glowna->createBitmap();
+    bool redraw = false;
+    bool hover=false;
+    bool resize=false;
+    bool start=true;
+    int mouse_x,mouse_y;
+    while (running) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(queue, &ev);
-        switch (ev.type)
-        {
+
+        switch (ev.type) {
+
+            case ALLEGRO_EVENT_TIMER:
+                redraw = true;
+                break;
+
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 running = false;
                 break;
+
             case ALLEGRO_EVENT_DISPLAY_RESIZE:
-                // WAŻNE: MUSI BYĆ
                 al_acknowledge_resize(display);
                 screen_width = al_get_display_width(display);
                 screen_height = al_get_display_height(display);
-                printf("Resize: %dx%d\n", screen_width, screen_height);
-                Strona_glowna->ReloadFont();
-                Baza->ReCreateRectangle();
+                resize=true;
                 break;
+
             case ALLEGRO_EVENT_MOUSE_AXES:
-                cout<<ev.mouse.x<<ev.mouse.y<<"\n";
-                Strona_glowna->hover(ev.mouse.x,ev.mouse.y);
-                break;
-            case ALLEGRO_EVENT_KEY_DOWN:
-                if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
-                    running = false;
+                hover=true;
+                mouse_x=ev.mouse.x;
+                mouse_y=ev.mouse.y;
                 break;
         }
-        // ===== RENDER =====
 
-        al_flip_display();
+        if (redraw && al_is_event_queue_empty(queue)) {
 
+            al_set_target_backbuffer(display);
+            if (resize || start) {
+                al_clear_to_color(al_map_rgb(30, 30, 40));
+                Strona_glowna->buildButtons(display);
+                Strona_glowna->createBitmap();
+                resize=false;
+                start=false;
+                al_flip_display();
+            }
+            if(hover){
+                Strona_glowna->hover(mouse_x, mouse_y);
+                Strona_glowna->buildButtons(display);
+                hover=false;
+                al_flip_display();
+            }
+
+            redraw = false;
+        }
     }
     al_destroy_event_queue(queue);
     al_destroy_display(display);
