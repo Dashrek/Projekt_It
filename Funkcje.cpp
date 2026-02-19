@@ -84,7 +84,7 @@ void Button::extractPosition(const vector<string>& res) {
 
 Page::Page(){
     aktualny_klucz=1;
-    aktywny_przycisk= -1;
+    aktywny_przycisk= 0;
 }
 void Page::ReloadFont() {
     for (auto const& [klucz, przycisk] : buttons) {
@@ -327,7 +327,24 @@ void ButtonFactory::ReCreateRectangle() {
         createRectangle(param);
     }
 }
-
+void Page::hover(int x, int y ){
+    ALLEGRO_COLOR punkt=al_get_pixel(przyciski,x,y);
+    unsigned char r, g, b, a;
+    al_unmap_rgba(punkt, &r, &g, &b, &a);
+    cout << (int)r <<" "<< (int)g<<" " << (int)b << " " << (int)a << "\n";
+    int ri=(int)r;
+    cout<< ri << " " << aktywny_przycisk;
+    if (ri!=aktywny_przycisk) {
+        if (aktywny_przycisk!=0) {
+            buttons[aktywny_przycisk]->normal();
+        }
+        aktywny_przycisk=ri;
+        cout << ri;
+        if (aktywny_przycisk!=0) {
+            buttons[aktywny_przycisk]->hover();
+        }
+    }
+}
 void Page::createBitmap() {
     ALLEGRO_BITMAP * old=al_get_target_bitmap();
     al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_SINGLE_CHANNEL_8);

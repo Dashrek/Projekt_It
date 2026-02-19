@@ -91,6 +91,7 @@ class Page{
 public:
     const int getKlucz() const{return aktualny_klucz;};
     void createBitmap();
+    void hover(int x, int y);
     map<int,unique_ptr<Button>> buttons;
     Page();
     void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});

@@ -11,6 +11,7 @@ int main()
     al_init();
     al_install_keyboard();
     al_init_primitives_addon();
+    al_install_mouse();
     al_init_font_addon();
     al_init_ttf_addon();
 
@@ -73,6 +74,7 @@ int main()
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     al_register_event_source(queue, al_get_display_event_source(display));
     al_register_event_source(queue, al_get_keyboard_event_source());
+    al_register_event_source(queue, al_get_mouse_event_source());
     bool running = true;
     while (running)
     {
@@ -83,6 +85,7 @@ int main()
                           static_cast<float>(al_get_display_height(display)) - 10.f,
                           al_map_rgb(200, 200, 255), 2);
         Strona_glowna->buildButtons(display);
+        Strona_glowna->createBitmap();
         ALLEGRO_EVENT ev;
         al_wait_for_event(queue, &ev);
         switch (ev.type)
@@ -98,6 +101,10 @@ int main()
                 printf("Resize: %dx%d\n", screen_width, screen_height);
                 Strona_glowna->ReloadFont();
                 Baza->ReCreateRectangle();
+                break;
+            case ALLEGRO_EVENT_MOUSE_AXES:
+                cout<<ev.mouse.x<<ev.mouse.y<<"\n";
+                Strona_glowna->hover(ev.mouse.x,ev.mouse.y);
                 break;
             case ALLEGRO_EVENT_KEY_DOWN:
                 if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
