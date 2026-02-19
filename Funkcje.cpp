@@ -355,7 +355,11 @@ void Page::createBitmap() {
     }
     al_set_target_bitmap(old);
 }
-
+Page::~Page()
+{
+    al_destroy_bitmap(przyciski);
+    przyciski= nullptr;
+}
 
 
 void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
