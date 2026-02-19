@@ -132,6 +132,9 @@ int main()
             redraw = false;
         }
     }
+
+    delete Strona_glowna;
+    delete Baza;
     al_destroy_event_queue(queue);
     al_destroy_display(display);
     return 0;
