@@ -123,10 +123,13 @@ int main()
                 al_flip_display();
             }
             if(hover){
-                Strona_glowna->hover(mouse_x, mouse_y);
-                Strona_glowna->buildButtons(display);
-                hover=false;
-                al_flip_display();
+                if (Strona_glowna->hover(mouse_x, mouse_y)) {
+                    al_clear_to_color(al_map_rgb(30,30,40));
+
+                    Strona_glowna->buildButtons(display);
+                    hover=false;
+                    al_flip_display();
+                }
             }
 
             redraw = false;

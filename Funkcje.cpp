@@ -327,11 +327,12 @@ void ButtonFactory::ReCreateRectangle() {
         createRectangle(param);
     }
 }
-void Page::hover(int x, int y ){
+bool Page::hover(int x, int y ){
     ALLEGRO_COLOR punkt=al_get_pixel(przyciski,x,y);
     unsigned char r, g, b, a;
     al_unmap_rgba(punkt, &r, &g, &b, &a);
     int ri=(int)r;
+    //cout << ri << "\n";
     if (ri!=aktywny_przycisk) {
         if (aktywny_przycisk!=0) {
             buttons[aktywny_przycisk]->normal();
@@ -340,7 +341,9 @@ void Page::hover(int x, int y ){
         if (aktywny_przycisk!=0) {
             buttons[aktywny_przycisk]->hover();
         }
+        return true;
     }
+    return false;
 }
 void Page::createBitmap() {
     ALLEGRO_BITMAP * old=al_get_target_bitmap();
@@ -350,6 +353,7 @@ void Page::createBitmap() {
     }
     przyciski=al_create_bitmap(screen_width,screen_height);
     al_set_target_bitmap(przyciski);
+    al_clear_to_color((al_map_rgba(0,0,0,255)));
     for (auto const& [klucz, przycisk] : buttons) {
         przycisk->draw(al_map_rgba(klucz,0,0,255));
     }

@@ -91,7 +91,7 @@ class Page{
 public:
     const int getKlucz() const{return aktualny_klucz;};
     void createBitmap();
-    void hover(int x, int y);
+    bool hover(int x, int y);
     map<int,unique_ptr<Button>> buttons;
     Page();
     ~Page();
