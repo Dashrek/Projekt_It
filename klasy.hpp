@@ -38,6 +38,7 @@ typedef struct {
     ALLEGRO_COLOR border_hover;//kolor po najechaniu
     ALLEGRO_COLOR border_active;//kolor po naciśnięciu
     ALLEGRO_COLOR shadow_color;//kolor cienia
+    int typ;
     shared_ptr<ButtonImage> images;
 } ButtonParameters;
 int actual_value(const string &value);
@@ -46,15 +47,16 @@ vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
 void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
+enum Typ{Przycisk,Pierwiastek};
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
     public:
         ButtonFactory();
-        shared_ptr<ButtonParameters> getOrCreate(string id, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
+        shared_ptr<ButtonParameters> getOrCreate(string id,int typ=Przycisk, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
         void ReCreateRectangle();
     private:
-        void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col);
+        void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, int typ);
         void createRectangle(shared_ptr<ButtonParameters> p);
     };
 class Button{
@@ -82,6 +84,23 @@ public:
 private:
     ALLEGRO_FONT *Font=nullptr;
     void extractPosition(const vector<string>& res);
+};
+class Atom{
+    string name;
+    shared_ptr<ButtonParameters> param;
+    string posx, posy;
+    string fontsize,font,fontmaxwidth,fontminwidth;
+    ALLEGRO_COLOR font_color,font_shadow_color;
+public:
+    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    void build();
+    void draw(ALLEGRO_COLOR color);
+    void generateFont();
+    ~Atom();
+private:
+    ALLEGRO_FONT *Font=nullptr;
+    void extractPosition(const vector<string>& res);
+
 };
 class Page{
     vector<int> cykliczne;

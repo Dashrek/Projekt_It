@@ -28,10 +28,10 @@ int main()
 
     al_set_target_backbuffer(display);
     al_clear_to_color(al_map_rgb(30, 30, 40));
-    al_draw_rectangle(10, 10,
+    /*al_draw_rectangle(10, 10,
                       static_cast<float>(al_get_display_width(display)) - 10,
                       static_cast<float>(al_get_display_height(display)) - 10.f,
-                      al_map_rgb(200, 200, 255), 2);
+                      al_map_rgb(200, 200, 255), 2);*/
     al_flip_display();
 
     auto Baza=new ButtonFactory();
