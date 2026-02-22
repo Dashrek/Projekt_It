@@ -36,14 +36,14 @@ int main()
 
     auto Baza=new ButtonFactory();
     auto Strona_glowna=new Page();
-    Strona_glowna->addButton(*Baza,"Złoto","Nowa gra Solo",
-                             {"position-x:50vw",
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
+                             vector<string>{"position-x:50vw",
                               "position-y:20vh",
                               "font-size:3vw",
                                  "font-maxwidth:340px",
                               "font-name:./fonts/orbitron-black.ttf",
                               "font:#FEBD27FF",
-                              "font-shadow:#00000050"},{"width:30vw",
+                              "font-shadow:#00000050"},vector<string>{"width:30vw",
                                                         "min-width:20px",
                                                         "max-width:350px",
                                                         "height:15vh",
@@ -53,11 +53,11 @@ int main()
                                                         "border-thickness:0.5vw",
                                                         "shadow-offset-x:2px",
                                                         "shadow-offset-y:2px"},
-                             {f_HTML("#C8B5B5"),
+                             vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
                               f_HTML("#000000"),
                               f_HTML("#FEF177"),
                               f_HTML("#F25420"),
-                              f_HTML("#000000")});
+                              f_HTML("#000000")},"Nowa gra Solo");
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Nowa Gra Online","50vw", "50vh");
     /*Strona_glowna->addButton(*Baza,"Złoto","Nowa Gra Online",
                              {"position-x:50vw",

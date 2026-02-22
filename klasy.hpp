@@ -47,7 +47,7 @@ vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
 void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
-enum Typ{Przycisk,Pierwiastek};
+enum Typ{Przycisk,Pierwiastek, PoleTekstowe, PrzyciskTriangleG, PrzyciskTriangleD};
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
@@ -58,49 +58,87 @@ class ButtonFactory {
     private:
         void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, int typ);
         void createRectangle(shared_ptr<ButtonParameters> p);
+
     };
-class Button{
-    //aspekty wizualne
-    string name;
-    string posx, posy;
-    string fontsize,font,fontmaxwidth,fontminwidth;
-    ALLEGRO_COLOR font_color,font_shadow_color;
-    shared_ptr<ButtonParameters> param;
-    function <void()> checkevent;
-    //aspekty logiczne
-    //wybór trybu wyświetlenia
-    bool tryb[2];
-public:
-    Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
-    Button(const Button& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);
-    void hover();
-    void pressed();
-    void normal();
-    void take_event();
-    ~Button();
-    void build();
-    void draw(ALLEGRO_COLOR color);
-    void generateFont();
-private:
-    ALLEGRO_FONT *Font=nullptr;
-    void extractPosition(const vector<string>& res);
-};
 class Atom{
+protected:
     string name;
     shared_ptr<ButtonParameters> param;
     string posx, posy;
     string fontsize,font,fontmaxwidth,fontminwidth;
     ALLEGRO_COLOR font_color,font_shadow_color;
+    void virtual extractPositionH(const vector<string>& res);
+    void virtual generateFontH();
+    void virtual buildH();
+    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);
+    ALLEGRO_FONT *Font=nullptr;
 public:
     Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    Atom(const Atom& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);
     void build();
-    void draw(ALLEGRO_COLOR color);
-    void generateFont();
-    ~Atom();
-private:
-    ALLEGRO_FONT *Font=nullptr;
     void extractPosition(const vector<string>& res);
+    void generateFont();
+    virtual std::unique_ptr<Atom> clone(ButtonFactory& factory,
+                                        const std::string& nazwa,
+                                        const std::string& pos_x,
+                                        const std::string& pos_y) const
+    {
+        return std::make_unique<Atom>(*this, factory, nazwa, pos_x, pos_y);
+    }
+    virtual void hover(){};
+    virtual void pressed(){};
+    virtual void normal(){};
+    virtual void draw(ALLEGRO_COLOR color){};
+    virtual ~Atom();
 
+
+
+};
+class Button : public Atom{
+    //aspekty wizualne
+private:
+    function <void()> checkevent;
+    bool tryb[2];
+
+public:
+    Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    Button(const Button& Inny, ButtonFactory& factory, string nazwa, string pos_x, string pos_y);
+    void hover() override;
+    void pressed() override;
+    void normal() override;
+    void take_event();
+    void draw(ALLEGRO_COLOR color) override;
+    std::unique_ptr<Atom> clone(ButtonFactory& factory,
+                                const std::string& nazwa,
+                                const std::string& pos_x,
+                                const std::string& pos_y) const override
+    {
+        return std::make_unique<Button>(*this, factory, nazwa, pos_x, pos_y);
+    }
+protected:
+    void buildH() override;
+};
+class TriangleButton : public Atom{
+    //aspekty wizualne
+private:
+    function <void()> checkevent;
+    bool tryb[2];
+
+public:
+    TriangleButton(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    TriangleButton(const Button& Inny, ButtonFactory& factory, string nazwa, string pos_x, string pos_y);
+    void hover() override;
+    void pressed() override;
+    void normal() override;
+    void take_event();
+    void draw(ALLEGRO_COLOR color) override;
+    std::unique_ptr<Atom> clone(ButtonFactory& factory,
+                                const std::string& nazwa,
+                                const std::string& pos_x,
+                                const std::string& pos_y) const override
+    {
+        return std::make_unique<TriangleButton>(*this, factory, nazwa, pos_x, pos_y);
+    }
 };
 class Page{
     vector<int> cykliczne;
@@ -111,11 +149,17 @@ public:
     const int getKlucz() const{return aktualny_klucz;};
     void createBitmap();
     bool hover(int x, int y);
-    map<int,unique_ptr<Button>> buttons;
+    map<int,unique_ptr<Atom>> buttons;
     Page();
     ~Page();
+    template<typename T, typename... Args> void addElement(Args&&... args){
+        buttons[aktualny_klucz] =
+                std::make_unique<T>(std::forward<Args>(args)...);
+
+        aktualny_klucz = (aktualny_klucz == 255 ? 1 : aktualny_klucz + 1);
+    }
     void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
-    void addButton(ButtonFactory &factory,const Button & Inny, const string nazwa,const string pos_x, const string pos_y);
+    void addButton(ButtonFactory &factory,const Atom & Inny, const string nazwa,const string pos_x, const string pos_y);
     void buildButtons(ALLEGRO_DISPLAY *obraz);
     void ReloadFont();//ponowne załadowanie czcionki
     void receiveFunctions();

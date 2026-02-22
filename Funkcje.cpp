@@ -89,25 +89,29 @@ Atom::~Atom(){
     if (Font!=nullptr) al_destroy_font(Font);
 }
 Atom::Atom(ButtonFactory& Factory,
+           string styleID,
+           const vector<string>& font_h,
+           const vector<string>& res,
+           const vector<ALLEGRO_COLOR>& col,
+           string nam,int typ): name(nam){
+    param = Factory.getOrCreate(styleID, typ,res, col);//style id to nazwa jak class w css
+    extractPosition(font_h);
+    generateFont();
+}
+Atom::Atom(ButtonFactory& Factory,
      string styleID,
      const vector<string>& font_h,
      const vector<string>& res,
      const vector<ALLEGRO_COLOR>& col,
-     string nam) : name(nam){
-    param = Factory.getOrCreate(styleID, Pierwiastek,res, col);//style id to nazwa jak class w css
-    extractPosition(font_h);
-    generateFont();
+     string nam) : Atom(Factory,styleID,font_h,res,col,nam,Pierwiastek){
+
 }
 Button::Button(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
-: name(nam) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
-
-        param = factory.getOrCreate(styleID, Przycisk,res, col);//style id to nazwa jak class w css
-        extractPosition(font_h);
-        generateFont();
-
+: Atom(factory,styleID,font_h,res,col,nam,Przycisk) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
 }
-Button::Button(const Button& Inny, ButtonFactory& factory,const string nazwa, const string pos_x, const string pos_y):
+Atom::Atom(const Atom& Inny, ButtonFactory& factory,const string nazwa, const string pos_x, const string pos_y):
         name(nazwa),
+        param(Inny.param),
         posx(pos_x),
         posy(pos_y),
         fontsize(Inny.fontsize),
@@ -115,17 +119,22 @@ Button::Button(const Button& Inny, ButtonFactory& factory,const string nazwa, co
         fontmaxwidth(Inny.fontmaxwidth),
         fontminwidth(Inny.fontminwidth),
         font_color(Inny.font_color),
-        font_shadow_color(Inny.font_shadow_color),
-        param(Inny.param)
+        font_shadow_color(Inny.font_shadow_color)
 {
     generateFont();
 }
-void Button::extractPosition(const vector<string>& res) {
+Button::Button(const Button& Inny, ButtonFactory& factory,string nazwa, string pos_x, string pos_y):
+    Atom(Inny,factory,nazwa,pos_x,pos_y)
+{}
+void Atom::extractPosition(const vector<std::string> &res) {
+    extractPositionH(res);
+}
+void Atom::extractPositionH(const vector<string>& res) {
     for (auto i : res) {
         vector<string> k = split_manual(i, ":");
         if (k[0] == "position-x") posx = k[1];//pozycja przycisku w X
         if (k[0] == "position-y") posy = k[1];
-        if (k[0]=="font-size") fontsize=k[1];//rozmiar czionki
+        if (k[0]=="font-size") fontsize=k[1];//rozmiar czcionki
         if (k[0]=="font-name") font=k[1];//path czcionki
         if (k[0]=="font") font_color=f_HTML(k[1]); //kolor fontu w html
         if (k[0]=="font-shadow") font_shadow_color=f_HTML(k[1]); //kolor cienia fontu w html
@@ -174,13 +183,19 @@ bool BakeFontToMemoryBitmap(
 
     return true;
 }
-void Button::generateFont() {
+void Atom::generateFont() {
+    generateFontH();
+}
+void Atom::generateFontH() {
     int fontsizer=actual_value(fontsize);
     if (fontmaxwidth=="") fontmaxwidth="100vh";
     int w;
     Start:
     if(Font) al_destroy_font(Font);
     Font=al_load_ttf_font(font.c_str(),fontsizer,0);
+    if (!Font)
+    {cout<<"Nie udało się załadować fontu\n";
+        return;}  // nie udało się załadować
     w=al_get_text_width(Font,name.c_str());
     if (w>actual_value(fontmaxwidth) && w<actual_value(fontminwidth)) {
         return;
@@ -191,7 +206,6 @@ void Button::generateFont() {
         fontsizer++;
         goto Start;
     }
-
 }
 void Button::hover(){
     tryb[0]=true;
@@ -222,7 +236,28 @@ void Button::draw(ALLEGRO_COLOR  color){
     h=(h<p_h && p_h<=m_h ? p_h :(h>m_h ? m_h : h) );
     al_draw_filled_rectangle(posix-w/2,posiy-h/2,posix+w-w/2,posiy+h-h/2,color);
 }
-void Button::build() {
+void Atom::build() {
+    buildH();
+}
+void Atom::buildH(){
+    int posix,posiy;
+    int k,l,off_y,off_x;
+    k=al_get_bitmap_width(param->images->normal);
+    l=al_get_bitmap_height(param->images->normal);
+    off_x=actual_value(param->shadow_offset_x);
+    off_y=actual_value(param->shadow_offset_y);
+    posix=actual_value(posx)-(k-abs(off_x))/2;
+    posix+=(off_x>0 ? 0 : off_x);
+    posiy=actual_value(posy)-(l-abs(off_y))/2;
+    posiy+=(off_y>0 ? 0 : off_y);
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+    al_draw_bitmap( param->images->normal,posix, posiy,0);
+    int w=al_get_text_width(Font,name.c_str());
+    int h=al_get_font_line_height(Font);
+    al_draw_text(Font, font_shadow_color,actual_value(posx)-0.5*w+actual_value(param->shadow_offset_x),actual_value(posy)-0.5*h+actual_value(param->shadow_offset_y),ALLEGRO_ALIGN_LEFT,name.c_str());
+    al_draw_text(Font, font_color,actual_value(posx)-0.5*w,actual_value(posy)-0.5*h,ALLEGRO_ALIGN_LEFT,name.c_str());
+}
+void Button::buildH() {
     int posix,posiy;
     int k,l,off_y,off_x;
     k=al_get_bitmap_width(param->images->normal);
@@ -247,10 +282,6 @@ void Button::build() {
     posiy+=(actual_value(param->shadow_offset_y)>0 ? 0 : actual_value(param->shadow_offset_y));
     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
     al_draw_bitmap(ShadowFont, posix, posiy,0);*/
-}
-
-Button::~Button() {
- if (Font!=nullptr) al_destroy_font(Font);
 }
 
 void AllegroImageDeleter(ButtonImage* bi) {
@@ -347,8 +378,15 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     int h_offset=actual_value(p->shadow_offset_y);
     h_offset+=(h_offset==0 ? 0 : (h_offset<0 ? -1 : 1));
     vector<ALLEGRO_BITMAP*>dar;
+
     dar.push_back(p->images->normal);
-    if (p->typ==Przycisk) {
+    bool warunek=p->typ==Przycisk;
+    bool warunek1=p->typ==Przycisk || p->typ==Pierwiastek;
+    bool warunek2=p->typ==Przycisk || p->typ==TriangleD || p->typ==TriangleU;
+    bool warunek3= p->typ==TriangleD || p->typ==TriangleU;
+    bool warunek4=p->typ==TriangleD;
+    bool warunek5= p->typ==TriangleU;
+    if (warunek2) {
         dar.push_back(p->images->hover);
         dar.push_back(p->images->pressed);
     }
@@ -364,38 +402,84 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
         al_set_target_bitmap(bi);
         al_clear_to_color(al_map_rgba(0, 0, 0, 0));
         int b_r=actual_value(p->border_radius);
-        al_draw_filled_rounded_rectangle((w_offset>0 ? w_offset:0),(h_offset>0 ? h_offset:0),
-                                         w+2*thic+(w_offset>0 ? w_offset:0),h+2*thic+(h_offset>0 ? h_offset:0),
-                                         b_r+(b_r>0 ? thic : 0),b_r+(b_r>0 ? thic : 0),p->shadow_color);
+        if (warunek1) {
+            al_draw_filled_rounded_rectangle((w_offset > 0 ? w_offset : 0), (h_offset > 0 ? h_offset : 0),
+                                             w + 2 * thic + (w_offset > 0 ? w_offset : 0),
+                                             h + 2 * thic + (h_offset > 0 ? h_offset : 0),
+                                             b_r + (b_r > 0 ? thic : 0), b_r + (b_r > 0 ? thic : 0), p->shadow_color);
+        }
+        else if(warunek3){
+            al_draw_filled_triangle((warunek5 ? (w_offset > 0 ? w_offset : 0):w + 2 * thic + (w_offset > 0 ? w_offset : 0)),
+                                    (warunek5 ? (h_offset > 0 ? h_offset : 0) : h + 2 * thic + (h_offset > 0 ? h_offset : 0)),
+                                    w + 2 * thic + (w_offset > 0 ? w_offset : 0),
+                                    (h_offset > 0 ? h_offset : 0),
+                                    (w_offset > 0 ? w_offset : 0),
+                                    h + 2 * thic + (h_offset > 0 ? h_offset : 0),
+                                    p->shadow_color);
+        }
         for(int i=0; i<dar.size();i++){
             AllegroGaussFilter(bi,dar[i],w+abs(w_offset)+2*thic,h+abs(h_offset)+2*thic);
         }
         al_destroy_bitmap(bi);
         vector<ALLEGRO_COLOR>mar;
         mar.push_back(p->border_normal);
-        if(p->typ==Przycisk) {
+        if(warunek2) {
             mar.push_back(p->border_hover);
             mar.push_back(p->border_active);
         }
         for(int i=0;i<dar.size();i++){
             al_set_target_bitmap(dar[i]);
-            al_draw_filled_rounded_rectangle((w_offset>0 ? 0 : -w_offset),(h_offset>0 ? 0: -h_offset),
-                                             w+2*thic+(w_offset>0 ? 0 : -w_offset),h+2*thic+(h_offset>0 ? 0 : -h_offset),
-                                             b_r+(b_r>0 ? thic : 0),b_r+(b_r>0 ? thic : 0),mar[i]);
-            al_draw_rounded_rectangle((w_offset>0 ? 0 : -w_offset),(h_offset>0 ? 0: -h_offset),
-                                       w+2*thic+(w_offset>0 ? 0 : -w_offset),h+2*thic+(h_offset>0 ? 0 : -h_offset),
-                                       b_r+(b_r>0 ? thic : 0),b_r+(b_r>0 ? thic : 0), f_HTML("#000000FF"),1.0f);
-            al_draw_filled_rounded_rectangle((w_offset>0 ? 0 : -w_offset)+thic,(h_offset>0 ? 0: -h_offset)+thic,
-                                             w+thic+(w_offset>0 ? 0 : -w_offset),h+thic+(h_offset>0 ? 0 : -h_offset),
-                                             b_r,b_r,p->button);
-            al_draw_rounded_rectangle((w_offset>0 ? 0 : -w_offset)+thic,(h_offset>0 ? 0: -h_offset)+thic,
-                                             w+thic+(w_offset>0 ? 0 : -w_offset),h+thic+(h_offset>0 ? 0 : -h_offset),
-                                             b_r,b_r,f_HTML("#000000FF"),1.0f);
+            if(warunek1) {
+                al_draw_filled_rounded_rectangle((w_offset > 0 ? 0 : -w_offset), (h_offset > 0 ? 0 : -h_offset),
+                                                 w + 2 * thic + (w_offset > 0 ? 0 : -w_offset),
+                                                 h + 2 * thic + (h_offset > 0 ? 0 : -h_offset),
+                                                 b_r + (b_r > 0 ? thic : 0), b_r + (b_r > 0 ? thic : 0), mar[i]);
+                al_draw_rounded_rectangle((w_offset > 0 ? 0 : -w_offset), (h_offset > 0 ? 0 : -h_offset),
+                                          w + 2 * thic + (w_offset > 0 ? 0 : -w_offset),
+                                          h + 2 * thic + (h_offset > 0 ? 0 : -h_offset),
+                                          b_r + (b_r > 0 ? thic : 0), b_r + (b_r > 0 ? thic : 0), f_HTML("#000000FF"),
+                                          1.0f);
+                al_draw_filled_rounded_rectangle((w_offset > 0 ? 0 : -w_offset) + thic,
+                                                 (h_offset > 0 ? 0 : -h_offset) + thic,
+                                                 w + thic + (w_offset > 0 ? 0 : -w_offset),
+                                                 h + thic + (h_offset > 0 ? 0 : -h_offset),
+                                                 b_r, b_r, p->button);
+                al_draw_rounded_rectangle((w_offset > 0 ? 0 : -w_offset) + thic, (h_offset > 0 ? 0 : -h_offset) + thic,
+                                          w + thic + (w_offset > 0 ? 0 : -w_offset),
+                                          h + thic + (h_offset > 0 ? 0 : -h_offset),
+                                          b_r, b_r, f_HTML("#000000FF"), 1.0f);
+            }
+            if(warunek3){
+                al_draw_filled_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset) : w + 2 * thic + (w_offset > 0 ? 0 : -w_offset)),
+                                        (warunek5 ? (h_offset > 0 ? 0 : -h_offset):h + 2 * thic + (h_offset > 0 ? 0 : -h_offset)),
+                                        w + 2 * thic +(w_offset > 0 ? 0 : -w_offset),
+                                        (h_offset > 0 ? 0 : -h_offset),
+                                        (w_offset > 0 ? 0 : -w_offset),
+                                        h + 2 * thic + (h_offset > 0 ? 0 : -h_offset),mar[i]);
+                al_draw_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset) : w + 2 * thic + (w_offset > 0 ? 0 : -w_offset)),
+                                 (warunek5 ? (h_offset > 0 ? 0 : -h_offset):h + 2 * thic + (h_offset > 0 ? 0 : -h_offset)),
+                                 w + 2 * thic +(w_offset > 0 ? 0 : -w_offset),
+                                 (h_offset > 0 ? 0 : -h_offset),
+                                 (w_offset > 0 ? 0 : -w_offset),
+                                 h + 2 * thic + (h_offset > 0 ? 0 : -h_offset),f_HTML("#000000FF"),1.0f);
+                al_draw_filled_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset)+thic : w +  thic + (w_offset > 0 ? 0 : -w_offset)),
+                                        (warunek5 ? (h_offset > 0 ? 0 : -h_offset)+thic:h +thic + (h_offset > 0 ? 0 : -h_offset)),
+                                        w + thic +(w_offset > 0 ? 0 : -w_offset),
+                                        (h_offset > 0 ? 0 : -h_offset)+thic,
+                                        (w_offset > 0 ? 0 : -w_offset)+thic,
+                                        h + thic + (h_offset > 0 ? 0 : -h_offset),p->button);
+                al_draw_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset)+thic : w +  thic + (w_offset > 0 ? 0 : -w_offset)),
+                                        (warunek5 ? (h_offset > 0 ? 0 : -h_offset)+thic:h +thic + (h_offset > 0 ? 0 : -h_offset)),
+                                        w + thic +(w_offset > 0 ? 0 : -w_offset),
+                                        (h_offset > 0 ? 0 : -h_offset)+thic,
+                                        (w_offset > 0 ? 0 : -w_offset)+thic,
+                                        h + thic + (h_offset > 0 ? 0 : -h_offset),f_HTML("#000000FF"), 1.0f);
+            }
         }
 
     }
     p->images->normal=dar[0];
-    if(p->typ==Przycisk) {
+    if(warunek2) {
         p->images->hover = dar[1];
         p->images->pressed = dar[2];
     }
@@ -409,13 +493,14 @@ void Page::ReloadFont() {
         przycisk->generateFont();
     }
 }
+
 void Page::addButton(ButtonFactory &factory, string styleID, string nam, const vector<string> &font_h,
                      const vector<string> &res, const vector<ALLEGRO_COLOR> &col) {
     buttons[aktualny_klucz]= make_unique<Button>(factory, styleID,font_h, res,col, nam);
     aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
 }
-void Page::addButton(ButtonFactory &factory,const Button & Inny, const string nazwa,const string pos_x, const string pos_y) {
-    buttons[aktualny_klucz]= make_unique<Button>(Inny,factory,nazwa,pos_x,pos_y);
+void Page::addButton(ButtonFactory &factory,const Atom & Inny, const string nazwa,const string pos_x, const string pos_y) {
+    buttons[aktualny_klucz] = Inny.clone(factory, nazwa, pos_x, pos_y);
     aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
 }
 void Page::buildButtons(ALLEGRO_DISPLAY *obraz) {
