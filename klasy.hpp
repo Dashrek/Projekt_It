@@ -11,6 +11,7 @@
 #include <allegro5/allegro.h>
 #include <math.h>
 #include <functional>
+#include <thread>
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
@@ -47,19 +48,19 @@ vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
 void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
-enum Typ{Przycisk,Pierwiastek, PoleTekstowe, PrzyciskTriangleG, PrzyciskTriangleD};
+enum Typ{Przycisk,Pierwiastek, PoleTekstowe, TriangleU, TriangleD};
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
-    public:
-        ButtonFactory();
-        shared_ptr<ButtonParameters> getOrCreate(string id,int typ=Przycisk, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
-        void ReCreateRectangle();
-    private:
-        void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, int typ);
-        void createRectangle(shared_ptr<ButtonParameters> p);
+public:
+    ButtonFactory();
+    shared_ptr<ButtonParameters> getOrCreate(string id,int typ=Przycisk, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
+    void ReCreateRectangle();
+private:
+    void updateParams(shared_ptr<ButtonParameters> p, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, int typ);
+    void createRectangle(shared_ptr<ButtonParameters> p);
 
-    };
+};
 class Atom{
 protected:
     string name;
@@ -96,9 +97,7 @@ public:
 };
 class Button : public Atom{
     //aspekty wizualne
-private:
-    function <void()> checkevent;
-    bool tryb[2];
+
 
 public:
     Button(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
@@ -116,20 +115,16 @@ public:
         return std::make_unique<Button>(*this, factory, nazwa, pos_x, pos_y);
     }
 protected:
-    void buildH() override;
-};
-class TriangleButton : public Atom{
-    //aspekty wizualne
-private:
     function <void()> checkevent;
     bool tryb[2];
-
+    void buildH() override;
+    Button(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam,int typ);
+};
+class TriangleButton : public Button{
+    //aspekty wizualne
 public:
     TriangleButton(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
-    TriangleButton(const Button& Inny, ButtonFactory& factory, string nazwa, string pos_x, string pos_y);
-    void hover() override;
-    void pressed() override;
-    void normal() override;
+    TriangleButton(const TriangleButton& Inny, ButtonFactory& factory, string nazwa, string pos_x, string pos_y);
     void take_event();
     void draw(ALLEGRO_COLOR color) override;
     std::unique_ptr<Atom> clone(ButtonFactory& factory,
@@ -139,6 +134,8 @@ public:
     {
         return std::make_unique<TriangleButton>(*this, factory, nazwa, pos_x, pos_y);
     }
+protected:
+    void buildH() override;
 };
 class Page{
     vector<int> cykliczne;
@@ -158,7 +155,6 @@ public:
 
         aktualny_klucz = (aktualny_klucz == 255 ? 1 : aktualny_klucz + 1);
     }
-    void addButton(ButtonFactory& factory, string styleID, string nam="", const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={});
     void addButton(ButtonFactory &factory,const Atom & Inny, const string nazwa,const string pos_x, const string pos_y);
     void buildButtons(ALLEGRO_DISPLAY *obraz);
     void ReloadFont();//ponowne załadowanie czcionki

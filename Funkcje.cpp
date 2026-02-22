@@ -98,6 +98,10 @@ Atom::Atom(ButtonFactory& Factory,
     extractPosition(font_h);
     generateFont();
 }
+Button::Button(ButtonFactory& Factory, string styleID,
+               const vector<string>& font_h, const vector<string>& res,
+               const vector<ALLEGRO_COLOR>& col, string nam,int typ) :
+        Atom(Factory, styleID, font_h, res, col, nam,typ){}
 Atom::Atom(ButtonFactory& Factory,
      string styleID,
      const vector<string>& font_h,
@@ -108,6 +112,9 @@ Atom::Atom(ButtonFactory& Factory,
 }
 Button::Button(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
 : Atom(factory,styleID,font_h,res,col,nam,Przycisk) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
+}
+TriangleButton::TriangleButton(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
+        : Button(factory,styleID,font_h,res,col, split_manual(nam,":")[0],(split_manual(nam,":")[1]=="D" ? TriangleD : TriangleU)) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
 }
 Atom::Atom(const Atom& Inny, ButtonFactory& factory,const string nazwa, const string pos_x, const string pos_y):
         name(nazwa),
@@ -126,6 +133,9 @@ Atom::Atom(const Atom& Inny, ButtonFactory& factory,const string nazwa, const st
 Button::Button(const Button& Inny, ButtonFactory& factory,string nazwa, string pos_x, string pos_y):
     Atom(Inny,factory,nazwa,pos_x,pos_y)
 {}
+TriangleButton::TriangleButton(const TriangleButton& Inny, ButtonFactory& factory,string nazwa, string pos_x, string pos_y):
+        Button(Inny,factory,nazwa,pos_x,pos_y)
+    {}
 void Atom::extractPosition(const vector<std::string> &res) {
     extractPositionH(res);
 }
@@ -232,9 +242,35 @@ void Button::draw(ALLEGRO_COLOR  color){
     int h= actual_value(param->height);
     int p_h= actual_value(param->minheight);
     int m_h= actual_value(param->maxheight);
-    w=(w<p_w && p_w<=m_w ? p_w :(w>m_w ? m_w : w) );
-    h=(h<p_h && p_h<=m_h ? p_h :(h>m_h ? m_h : h) );
-    al_draw_filled_rectangle(posix-w/2,posiy-h/2,posix+w-w/2,posiy+h-h/2,color);
+
+    w=(w<p_w && p_w<=m_w ? p_w : w);
+    w=(w>m_w ? m_w : w);
+    h=(h<p_h && p_h<=m_h ? p_h :h);
+    h=(h>m_h ? m_h : h);
+    al_draw_filled_rectangle(posix-w/2,posiy-h/2,posix+w/2,posiy+h/2,color);
+}
+void TriangleButton::draw(ALLEGRO_COLOR color){
+    int posix,posiy;
+    posix= actual_value(posx);
+    posiy= actual_value(posy);
+    int w= actual_value(param->width);
+    int p_w= actual_value(param->minwidth);
+    int m_w= actual_value(param->maxwidth);
+    int h= actual_value(param->height);
+    int p_h= actual_value(param->minheight);
+    int m_h= actual_value(param->maxheight);
+    w=(w<p_w && p_w<=m_w ? p_w : w);
+    w=(w>m_w ? m_w : w);
+    h=(h<p_h && p_h<=m_h ? p_h :h);
+    h=(h>m_h ? m_h : h);
+    bool warunek=param->typ==TriangleU;
+    al_draw_filled_triangle((warunek ? posix-w/2 : posix+w/2),
+                            (warunek ? posiy-h/2 : posiy+h/2),
+                            posix+w/2,
+                            posiy-h/2,
+                            posix-w/2,
+                            posiy+h/2,
+                            color);
 }
 void Atom::build() {
     buildH();
@@ -283,7 +319,29 @@ void Button::buildH() {
     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
     al_draw_bitmap(ShadowFont, posix, posiy,0);*/
 }
-
+void TriangleButton::buildH() {
+    int posix,posiy;
+    int k,l,off_y,off_x;
+    k=al_get_bitmap_width(param->images->normal);
+    l=al_get_bitmap_height(param->images->normal);
+    off_x=actual_value(param->shadow_offset_x);
+    off_y=actual_value(param->shadow_offset_y);
+    posix=actual_value(posx)-(k-abs(off_x))/2;
+    posix+=(off_x>0 ? 0 : off_x);
+    posiy=actual_value(posy)-(l-abs(off_y))/2;
+    posiy+=(off_y>0 ? 0 : off_y);
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+    al_draw_bitmap((!tryb[0] && !tryb[1] ? param->images->normal:(tryb[0] && !tryb[1] ? param->images->hover : param->images->pressed)),
+                   posix, posiy,0);
+    int w=al_get_text_width(Font,name.c_str());
+    int h=al_get_font_line_height(Font);
+    int center_x=actual_value(posx);
+    int center_y=actual_value(posy);
+    int next_x=(center_x-posix+(off_x>0 ? 0 : abs(off_x))-4* actual_value(param->border_thickness))/2;
+    int next_y=(center_y-posiy+(off_y>0?0:abs(off_y))-4* actual_value(param->border_thickness))/2;
+    al_draw_text(Font, font_shadow_color,center_x+(param->typ==TriangleU ? -next_x : next_x)+(param->typ==TriangleU ? -1:1)*0.5*w+actual_value(param->shadow_offset_x),center_y+(param->typ==TriangleU ? -next_y : next_y)-0.5*h+actual_value(param->shadow_offset_y),(param->typ==TriangleU ? ALLEGRO_ALIGN_LEFT:ALLEGRO_ALIGN_RIGHT),name.c_str());
+    al_draw_text(Font, font_color,center_x+(param->typ==TriangleU ? -next_x : next_x)+(param->typ==TriangleU ? -1:1)*0.5*w,center_y+(param->typ==TriangleU ? -next_y : next_y)-0.5*h,(param->typ==TriangleU ? ALLEGRO_ALIGN_LEFT:ALLEGRO_ALIGN_RIGHT),name.c_str());
+}
 void AllegroImageDeleter(ButtonImage* bi) {
     if (bi) {
         if (bi->normal)  al_destroy_bitmap(bi->normal);
@@ -318,6 +376,8 @@ void ButtonFactory::updateParams(shared_ptr<ButtonParameters> p, const vector<st
             p->maxwidth=k[1];
         }else if (k[0]=="height") {
             p->height=k[1];
+        }else if (k[0]=="min-height") {
+            p->minheight=k[1];
         }else if (k[0]=="max-height") {
             p->maxheight=k[1];
         }else if (k[0]=="border-radius") {
@@ -342,8 +402,30 @@ void ButtonFactory::updateParams(shared_ptr<ButtonParameters> p, const vector<st
     createRectangle(p);
 }
 void ButtonFactory::ReCreateRectangle() {
-    for(const auto& [name, param] : styles){
-        createRectangle(param);
+    const size_t maxThreads = 4;  // liczba wątków
+    std::vector<std::shared_ptr<ButtonParameters>> batch;
+    batch.reserve(maxThreads);
+
+    auto it = styles.begin();
+    while (it != styles.end()) {
+        // Zbieramy partię do 4 przycisków
+        batch.clear();
+        for (size_t i = 0; i < maxThreads && it != styles.end(); ++i, ++it) {
+            batch.push_back(it->second);
+        }
+
+        // Tworzymy wątki dla tej partii
+        std::vector<std::thread> threads;
+        for (auto& param : batch) {
+            threads.emplace_back([param, this]() {
+                createRectangle(param);
+            });
+        }
+
+        // Czekamy na zakończenie wszystkich wątków
+        for (auto& t : threads) {
+            t.join();
+        }
     }
 }
 
@@ -368,8 +450,10 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     int h= actual_value(p->height);
     int p_h= actual_value(p->minheight);
     int m_h= actual_value(p->maxheight);
-    w=(w<p_w && p_w<=m_w ? p_w :(w>m_w ? m_w : w) );
-    h=(h<p_h && p_h<=m_h ? p_h :(h>m_h ? m_h : h) );
+    w=(w<p_w && p_w<=m_w ? p_w : w);
+    w=(w>m_w ? m_w : w);
+    h=(h<p_h && p_h<=m_h ? p_h :h);
+    h=(h>m_h ? m_h : h);
     al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
     al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
     int thic= actual_value(p->border_thickness);
@@ -452,16 +536,16 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
             if(warunek3){
                 al_draw_filled_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset) : w + 2 * thic + (w_offset > 0 ? 0 : -w_offset)),
                                         (warunek5 ? (h_offset > 0 ? 0 : -h_offset):h + 2 * thic + (h_offset > 0 ? 0 : -h_offset)),
-                                        w + 2 * thic +(w_offset > 0 ? 0 : -w_offset),
-                                        (h_offset > 0 ? 0 : -h_offset),
-                                        (w_offset > 0 ? 0 : -w_offset),
-                                        h + 2 * thic + (h_offset > 0 ? 0 : -h_offset),mar[i]);
+                                        w + (warunek5 ? 4 * thic:2*thic) +(w_offset > 0 ? 0 : -w_offset),
+                                        (h_offset > 0 ? 0 : -h_offset)+(warunek5 ? 0:-2*thic),
+                                        (w_offset > 0 ? 0 : -w_offset)+(warunek5 ? 0:-2*thic),
+                                        h + (warunek5 ? 4 * thic:2*thic) + (h_offset > 0 ? 0 : -h_offset),mar[i]);
                 al_draw_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset) : w + 2 * thic + (w_offset > 0 ? 0 : -w_offset)),
                                  (warunek5 ? (h_offset > 0 ? 0 : -h_offset):h + 2 * thic + (h_offset > 0 ? 0 : -h_offset)),
-                                 w + 2 * thic +(w_offset > 0 ? 0 : -w_offset),
-                                 (h_offset > 0 ? 0 : -h_offset),
-                                 (w_offset > 0 ? 0 : -w_offset),
-                                 h + 2 * thic + (h_offset > 0 ? 0 : -h_offset),f_HTML("#000000FF"),1.0f);
+                                 w + (warunek5 ? 4 * thic:2*thic) +(w_offset > 0 ? 0 : -w_offset),
+                                 (h_offset > 0 ? 0 : -h_offset)+(warunek5 ? 0:-2*thic),
+                                 (w_offset > 0 ? 0 : -w_offset)+(warunek5 ? 0:-2*thic),
+                                 h + (warunek5 ? 4 * thic:2*thic) + (h_offset > 0 ? 0 : -h_offset),f_HTML("#000000FF"),1.0f);
                 al_draw_filled_triangle((warunek5 ? (w_offset > 0 ? 0 : -w_offset)+thic : w +  thic + (w_offset > 0 ? 0 : -w_offset)),
                                         (warunek5 ? (h_offset > 0 ? 0 : -h_offset)+thic:h +thic + (h_offset > 0 ? 0 : -h_offset)),
                                         w + thic +(w_offset > 0 ? 0 : -w_offset),
@@ -485,20 +569,39 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     }
 }
 Page::Page(){
+    przyciski=nullptr;
     aktualny_klucz=1;
     aktywny_przycisk= 0;
 }
 void Page::ReloadFont() {
-    for (auto const& [klucz, przycisk] : buttons) {
-        przycisk->generateFont();
+    const size_t maxThreads = 4;
+    std::vector<Atom*> batch;  // wskaźniki do obiektów w unique_ptr
+    batch.reserve(maxThreads);
+
+    auto it = buttons.begin();
+    while (it != buttons.end()) {
+        batch.clear();
+
+        // Tworzymy batch do 4 przycisków
+        for (size_t i = 0; i < maxThreads && it != buttons.end(); ++i, ++it) {
+            batch.push_back(it->second.get());  // get() daje wskaźnik surowy
+        }
+
+        // Uruchamiamy wątki dla tej partii
+        std::vector<std::thread> threads;
+        for (auto* przycisk : batch) {
+            threads.emplace_back([przycisk]() {
+                przycisk->generateFont();
+            });
+        }
+
+        // Czekamy na zakończenie wszystkich wątków
+        for (auto& t : threads) {
+            t.join();
+        }
     }
 }
 
-void Page::addButton(ButtonFactory &factory, string styleID, string nam, const vector<string> &font_h,
-                     const vector<string> &res, const vector<ALLEGRO_COLOR> &col) {
-    buttons[aktualny_klucz]= make_unique<Button>(factory, styleID,font_h, res,col, nam);
-    aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
-}
 void Page::addButton(ButtonFactory &factory,const Atom & Inny, const string nazwa,const string pos_x, const string pos_y) {
     buttons[aktualny_klucz] = Inny.clone(factory, nazwa, pos_x, pos_y);
     aktualny_klucz=(aktualny_klucz==255 ? 1 : aktualny_klucz+1);
@@ -527,7 +630,7 @@ bool Page::hover(int x, int y ){
     }
     return false;
 }
-void Page::createBitmap() {
+/* void Page::createBitmap() {//wersja sekwencyjna
     ALLEGRO_BITMAP * old=al_get_target_bitmap();
     if (przyciski) {
         al_destroy_bitmap(przyciski);
@@ -539,6 +642,84 @@ void Page::createBitmap() {
     for (auto const& [klucz, przycisk] : buttons) {
         przycisk->draw(al_map_rgba(klucz,0,0,255));
     }
+    al_set_target_bitmap(old);
+}*/
+void Page::createBitmap() {
+
+    ALLEGRO_BITMAP* old = al_get_target_bitmap();
+
+    if (przyciski) {
+        al_destroy_bitmap(przyciski);
+        przyciski = nullptr;
+    }
+
+    przyciski = al_create_bitmap(screen_width, screen_height);
+
+    const size_t maxThreads = 4;
+
+    // 🔹 zbieramy dane: Atom* + klucz
+    struct Task {
+        Atom* atom;
+        int key;
+    };
+
+    std::vector<Task> tasks;
+    tasks.reserve(buttons.size());
+
+    for (auto const& [klucz, przycisk] : buttons) {
+        tasks.push_back({przycisk.get(), klucz});
+    }
+
+    size_t total = tasks.size();
+    size_t chunkSize = (total + maxThreads - 1) / maxThreads;
+
+    std::vector<ALLEGRO_BITMAP*> threadBitmaps(maxThreads, nullptr);
+    std::vector<std::thread> threads;
+
+    for (size_t t = 0; t < maxThreads; ++t) {
+
+        size_t begin = t * chunkSize;
+        size_t end = std::min(begin + chunkSize, total);
+
+        if (begin >= end)
+            break;
+
+        threads.emplace_back([=, &threadBitmaps]() {
+
+            // UPEWNIJ SIĘ że to MEMORY_BITMAP
+            al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
+
+            ALLEGRO_BITMAP* local =
+                    al_create_bitmap(screen_width, screen_height);
+
+            al_set_target_bitmap(local);
+            al_clear_to_color(al_map_rgba(0,0,0,0));
+
+            for (size_t i = begin; i < end; ++i) {
+                ALLEGRO_COLOR c =
+                        al_map_rgba(tasks[i].key, 0, 0, 255);
+
+                tasks[i].atom->draw(c);
+            }
+
+            threadBitmaps[t] = local;
+        });
+    }
+
+    for (auto& th : threads)
+        th.join();
+
+    // 🔵 składanie w głównym wątku
+    al_set_target_bitmap(przyciski);
+    al_clear_to_color(al_map_rgba(0,0,0,255));
+
+    for (auto* bmp : threadBitmaps) {
+        if (bmp) {
+            al_draw_bitmap(bmp, 0, 0, 0);
+            al_destroy_bitmap(bmp);
+        }
+    }
+
     al_set_target_bitmap(old);
 }
 Page::~Page()

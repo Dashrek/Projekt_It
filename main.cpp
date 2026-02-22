@@ -68,7 +68,49 @@ int main()
                               "font:#FEBD27FF",
                               "font-shadow:#00000050"});*/
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Gra Rankingowa","50vw", "80vh");
+    Strona_glowna->addElement<TriangleButton>(*Baza,"Srebro",vector<string>{"position-x:16vw",
+                                                                            "position-y:16vh",
+                                                                            "font-size:3vw",
+                                                                            "font-maxwidth:12vw",
+                                                                            "font-name:./fonts/orbitron-black.ttf",
+                                                                            "font:#FEBD27FF",
+                                                                            "font-shadow:#00000050"},vector<string>{"width:30vw",
+                                                                                                                    "min-width:20px",
+                                                                                                                    "max-width:350px",
+                                                                                                                    "height:30vh",
+                                                                                                                    "min-height:20px",
+                                                                                                                    "max-height:350px",
+                                                                                                                    "border-radius:2px",
+                                                                                                                    "border-thickness:0.5vw",
+                                                                                                                    "shadow-offset-x:2px",
+                                                                                                                    "shadow-offset-y:2px"},
+                                              vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                    f_HTML("#000000"),
+                                                                    f_HTML("#FEF177"),
+                                                                    f_HTML("#F25420"),
+                                                                    f_HTML("#000000")},"Zaloguj:U");
 
+    Strona_glowna->addElement<TriangleButton>(*Baza,"Brąz",vector<string>{"position-x:18vw",
+                                                                            "position-y:18vh",
+                                                                            "font-size:3vw",
+                                                                            "font-maxwidth:12vw",
+                                                                            "font-name:./fonts/orbitron-black.ttf",
+                                                                            "font:#FEBD27FF",
+                                                                            "font-shadow:#00000050"},vector<string>{"width:30vw",
+                                                                                                                    "min-width:20px",
+                                                                                                                    "max-width:350px",
+                                                                                                                    "height:30vh",
+                                                                                                                    "min-height:20px",
+                                                                                                                    "max-height:350px",
+                                                                                                                    "border-radius:2px",
+                                                                                                                    "border-thickness:0.5vw",
+                                                                                                                    "shadow-offset-x:2px",
+                                                                                                                    "shadow-offset-y:2px"},
+                                              vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                    f_HTML("#000000"),
+                                                                    f_HTML("#FEF177"),
+                                                                    f_HTML("#F25420"),
+                                                                    f_HTML("#000000")},"Zarejestruj:D");
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     al_set_window_title(display, "Allegro 5 - Resize / Minimize / Maximize");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -84,7 +126,7 @@ int main()
     bool start=true;
     int mouse_x,mouse_y;
     while (running) {
-        ALLEGRO_EVENT ev;
+        ALLEGRO_EVENT ev,last_ev_axes;
         al_wait_for_event(queue, &ev);
 
         switch (ev.type) {
@@ -98,16 +140,12 @@ int main()
                 break;
 
             case ALLEGRO_EVENT_DISPLAY_RESIZE:
-                al_acknowledge_resize(display);
-                screen_width = al_get_display_width(display);
-                screen_height = al_get_display_height(display);
                 resize=true;
                 break;
 
             case ALLEGRO_EVENT_MOUSE_AXES:
                 hover=true;
-                mouse_x=ev.mouse.x;
-                mouse_y=ev.mouse.y;
+                last_ev_axes=ev;
                 break;
         }
 
@@ -115,7 +153,16 @@ int main()
 
             al_set_target_backbuffer(display);
             if (resize || start) {
+                al_acknowledge_resize(display);
+                screen_width = al_get_display_width(display);
+                screen_height = al_get_display_height(display);
+                ALLEGRO_TRANSFORM proj;
+                al_identity_transform(&proj);
+                al_orthographic_transform(&proj, 0, 0, -1, screen_width , screen_height, 1);
+                al_use_projection_transform(&proj);
                 al_clear_to_color(al_map_rgb(30, 30, 40));
+                Baza->ReCreateRectangle();
+                Strona_glowna->ReloadFont();
                 Strona_glowna->buildButtons(display);
                 Strona_glowna->createBitmap();
                 resize=false;
@@ -123,6 +170,8 @@ int main()
                 al_flip_display();
             }
             if(hover){
+                mouse_x=last_ev_axes.mouse.x;
+                mouse_y=last_ev_axes.mouse.y;
                 if (Strona_glowna->hover(mouse_x, mouse_y)) {
                     al_clear_to_color(al_map_rgb(30,30,40));
 
