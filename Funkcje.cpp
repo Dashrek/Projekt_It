@@ -630,7 +630,7 @@ bool Page::hover(int x, int y ){
     }
     return false;
 }
-/* void Page::createBitmap() {//wersja sekwencyjna
+ void Page::createBitmap() {//wersja sekwencyjna
     ALLEGRO_BITMAP * old=al_get_target_bitmap();
     if (przyciski) {
         al_destroy_bitmap(przyciski);
@@ -643,8 +643,32 @@ bool Page::hover(int x, int y ){
         przycisk->draw(al_map_rgba(klucz,0,0,255));
     }
     al_set_target_bitmap(old);
-}*/
-void Page::createBitmap() {
+}
+void Page::changeRanges() {
+    for (auto const& [klucz, przycisk] : buttons) {
+        przycisk->ReaddRange();
+    }
+}
+bool Page::findButton(int x, int y) {
+    for (auto const& [klucz, przycisk] : buttons) {
+        if (przycisk->check(x,y)){
+            if (klucz!=aktywny_przycisk) {
+                if (aktywny_przycisk!=0) {
+                    buttons[aktywny_przycisk]->normal();
+                }
+                aktywny_przycisk=klucz;
+                przycisk->hover();
+                return true;
+            }else return false;
+        }
+    }
+    if (aktywny_przycisk!=0) {
+        buttons[aktywny_przycisk]->normal();
+        aktywny_przycisk=0;
+    }
+    return false;
+}
+/*void Page::createBitmap() {
 
     ALLEGRO_BITMAP* old = al_get_target_bitmap();
 
@@ -721,22 +745,82 @@ void Page::createBitmap() {
     }
 
     al_set_target_bitmap(old);
-}
+}*/
 Page::~Page()
 {
     al_destroy_bitmap(przyciski);
     przyciski= nullptr;
 }
-
-void trojkat::addMoreLines(punkt C, punkt D) {
-    addMoreLinesH(C,D);
+void trojkat::addMorePointsH(punkt Cx){
+    C=Cx;
+    punkt wektorBC={C.x-B.x,C.y-B.y};
+    a=((float)wektorBC.y)/((float)wektorBC.x);
+    b=((float)C.y)-a*((float)C.x);
 }
-
-trojkat::trojkat(punkt A, punkt B, punkt C, punkt D) {
+void trojkat::addMorePoints(punkt Cx) {
+    addMorePointsH(Cx);
+}
+bool trojkat::check(int x, int y, int typ) {
+    if(typ==TriangleU){
+        return y<=(a*((float)x)+b) && x>=A.x && y>=A.y;
+    }else if(typ==TriangleD){
+        return y>=(a*((float)x)+b) && x<=A.x && y<=A.y;
+    }else{
+        cout<<"Ten element nie jest trójkątem!\n";
+    }
+    return false;
+}
+trojkat::trojkat(punkt Ax, punkt Bx, punkt Cx ) : A(Ax), B(Bx){
     //trójkąt składa się z linii ax+b oraz osi x i osi y
     //jeżeli typ
-    AB={A,B,true};//ax+b,
-    BC={B,C, false};s
-    addMoreLines(C,D);
+    addMorePoints(Cx);
 }
+kwadrat::kwadrat(punkt Ax, punkt Bx, punkt Cx) : trojkat(Ax,Bx,Cx){};
+void kwadrat::addMorePointsH(punkt Cx) {};
+bool kwadrat::check(int x, int y, int typ) {
+    if(typ==Przycisk){
+        return y>=A.y && x>=A.x && y<=B.y && x<=B.x;
+    }
+    cout << "To nie jest przycisk.\n";
+    return false;
+}
+void Button::ReaddRange() {
+    int posix,posiy;
+    posix= actual_value(posx);
+    posiy= actual_value(posy);
+    int w= actual_value(param->width);
+    int p_w= actual_value(param->minwidth);
+    int m_w= actual_value(param->maxwidth);
+    int h= actual_value(param->height);
+    int p_h= actual_value(param->minheight);
+    int m_h= actual_value(param->maxheight);
 
+    w=(w<p_w && p_w<=m_w ? p_w : w);
+    w=(w>m_w ? m_w : w);
+    h=(h<p_h && p_h<=m_h ? p_h :h);
+    h=(h>m_h ? m_h : h);
+    if(t) t.reset();
+    t=make_unique<kwadrat>(punkt{posix-w/2,posiy-h/2},punkt{posix+w/2,posiy+h/2});
+}
+void TriangleButton::ReaddRange() {
+    int posix,posiy;
+    posix= actual_value(posx);
+    posiy= actual_value(posy);
+    int w= actual_value(param->width);
+    int p_w= actual_value(param->minwidth);
+    int m_w= actual_value(param->maxwidth);
+    int h= actual_value(param->height);
+    int p_h= actual_value(param->minheight);
+    int m_h= actual_value(param->maxheight);
+
+    w=(w<p_w && p_w<=m_w ? p_w : w);
+    w=(w>m_w ? m_w : w);
+    h=(h<p_h && p_h<=m_h ? p_h :h);
+    h=(h>m_h ? m_h : h);
+    if(t) t.reset();
+
+    t=make_unique<trojkat>((param->typ==TriangleU ? punkt{posix-w/2,posiy-h/2} : punkt{posix+w/2,posiy+h/2}),punkt{posix+w/2,posiy-h/2}, punkt{posix-w/2,posiy+h/2});
+}
+bool Button::check(int x, int y) {
+    return t->check(x,y,param->typ);
+}

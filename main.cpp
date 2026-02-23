@@ -164,7 +164,8 @@ int main()
                 Baza->ReCreateRectangle();
                 Strona_glowna->ReloadFont();
                 Strona_glowna->buildButtons(display);
-                Strona_glowna->createBitmap();
+                //Strona_glowna->createBitmap();
+                Strona_glowna->changeRanges();
                 resize=false;
                 start=false;
                 al_flip_display();
@@ -172,9 +173,8 @@ int main()
             if(hover){
                 mouse_x=last_ev_axes.mouse.x;
                 mouse_y=last_ev_axes.mouse.y;
-                if (Strona_glowna->hover(mouse_x, mouse_y)) {
+                if (Strona_glowna->findButton(mouse_x, mouse_y)) {
                     al_clear_to_color(al_map_rgb(30,30,40));
-
                     Strona_glowna->buildButtons(display);
                     hover=false;
                     al_flip_display();

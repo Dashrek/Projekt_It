@@ -25,22 +25,25 @@ typedef struct {
     int x;
     int y;
 }punkt;
-typedef struct {
-    punkt a;
-    punkt b;
-    bool r;
-}linia;
 class trojkat {
 protected:
-    linia AB;
-    linia BC;
-    virtual void addMoreLinesH(punkt C,punkt D);s
+    punkt A;
+    punkt B;
+    virtual void addMorePointsH(punkt Cx);
 private:
-    linia CA;
+    punkt C;
+    float a,b;
 public:
-    trojkat(punkt A, punkt B, punkt C, punkt D={0,0});
-    void addMoreLines(punkt C, punkt D={0,0});
-    virtual bool check(int x, int y);
+    trojkat( punkt Ax, punkt Bx, punkt Cx={0,0});
+    void addMorePoints(punkt Cx={0,0});
+    virtual bool check(int x, int y, int typ);
+};
+class kwadrat:public trojkat{
+protected:
+    void addMorePointsH(punkt Cx) override;
+public:
+    kwadrat(punkt Ax, punkt Bx, punkt Cx={0,0});
+    bool check(int x, int y, int typ) override;
 };
 typedef struct {
     // Geometria
@@ -91,6 +94,7 @@ protected:
     void virtual extractPositionH(const vector<string>& res);
     void virtual generateFontH();
     void virtual buildH();
+
     Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);
     ALLEGRO_FONT *Font=nullptr;
 public:
@@ -99,6 +103,7 @@ public:
     void build();
     void extractPosition(const vector<string>& res);
     void generateFont();
+    void virtual ReaddRange(){};
     virtual std::unique_ptr<Atom> clone(ButtonFactory& factory,
                                         const std::string& nazwa,
                                         const std::string& pos_x,
@@ -110,6 +115,7 @@ public:
     virtual void pressed(){};
     virtual void normal(){};
     virtual void draw(ALLEGRO_COLOR color){};
+    virtual bool check(int x, int y){return false;};
     virtual ~Atom();
 
 
@@ -127,6 +133,8 @@ public:
     void normal() override;
     void take_event();
     void draw(ALLEGRO_COLOR color) override;
+    void ReaddRange() override;
+    bool check(int x, int y) override;
     std::unique_ptr<Atom> clone(ButtonFactory& factory,
                                 const std::string& nazwa,
                                 const std::string& pos_x,
@@ -136,8 +144,10 @@ public:
     }
 protected:
     function <void()> checkevent;
+    unique_ptr<trojkat> t;
     bool tryb[2];
     void buildH() override;
+
     Button(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam,int typ);
 };
 class TriangleButton : public Button{
@@ -147,6 +157,7 @@ public:
     TriangleButton(const TriangleButton& Inny, ButtonFactory& factory, string nazwa, string pos_x, string pos_y);
     void take_event();
     void draw(ALLEGRO_COLOR color) override;
+    void ReaddRange() override;
     std::unique_ptr<Atom> clone(ButtonFactory& factory,
                                 const std::string& nazwa,
                                 const std::string& pos_x,
@@ -165,6 +176,8 @@ class Page{
 public:
     const int getKlucz() const{return aktualny_klucz;};
     void createBitmap();
+    void changeRanges();
+    bool findButton(int x, int y);
     bool hover(int x, int y);
     map<int,unique_ptr<Atom>> buttons;
     Page();
