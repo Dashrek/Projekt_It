@@ -727,3 +727,16 @@ Page::~Page()
     al_destroy_bitmap(przyciski);
     przyciski= nullptr;
 }
+
+void trojkat::addMoreLines(punkt C, punkt D) {
+    addMoreLinesH(C,D);
+}
+
+trojkat::trojkat(punkt A, punkt B, punkt C, punkt D) {
+    //trójkąt składa się z linii ax+b oraz osi x i osi y
+    //jeżeli typ
+    AB={A,B,true};//ax+b,
+    BC={B,C, false};
+    addMoreLines(C,D);
+}
+

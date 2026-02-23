@@ -21,7 +21,27 @@ typedef struct {
     ALLEGRO_BITMAP* hover;// wyliczona mapa przy najechaniu
     ALLEGRO_BITMAP* pressed;// wyliczona mapa przy naciśnięciu
 } ButtonImage;
-
+typedef struct {
+    int x;
+    int y;
+}punkt;
+typedef struct {
+    punkt a;
+    punkt b;
+    bool r;
+}linia;
+class trojkat {
+protected:
+    linia AB;
+    linia BC;
+    virtual void addMoreLinesH(punkt C,punkt D);
+private:
+    linia CA;
+public:
+    trojkat(punkt A, punkt B, punkt C, punkt D={0,0});
+    void addMoreLines(punkt C, punkt D={0,0});
+    virtual bool check(int x, int y);
+};
 typedef struct {
     // Geometria
     string width, maxwidth, minwidth;//parametry wysokości przycisku
