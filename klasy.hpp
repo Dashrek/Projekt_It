@@ -34,7 +34,7 @@ class trojkat {
 protected:
     linia AB;
     linia BC;
-    virtual void addMoreLinesH(punkt C,punkt D);
+    virtual void addMoreLinesH(punkt C,punkt D);s
 private:
     linia CA;
 public:
