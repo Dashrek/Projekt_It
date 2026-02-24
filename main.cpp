@@ -4,38 +4,7 @@
 #include <allegro5/allegro_ttf.h>
 #include <cstdio>
 #include "klasy.hpp"
-int main()
-{
-    screen_width=800;
-    screen_height=600;
-    al_init();
-    al_install_keyboard();
-    al_init_primitives_addon();
-    al_install_mouse();
-    al_init_font_addon();
-    al_init_ttf_addon();
-
-
-    // ===== KLUCZOWE FLAGI OKNA =====
-    al_set_new_display_flags(
-        ALLEGRO_RESIZABLE |
-        ALLEGRO_WINDOWED
-    );
-
-    ALLEGRO_DISPLAY* display = al_create_display(screen_width, screen_height);//obraz
-    if (!display)
-        return -1;
-
-    al_set_target_backbuffer(display);
-    al_clear_to_color(al_map_rgb(30, 30, 40));
-    /*al_draw_rectangle(10, 10,
-                      static_cast<float>(al_get_display_width(display)) - 10,
-                      static_cast<float>(al_get_display_height(display)) - 10.f,
-                      al_map_rgb(200, 200, 255), 2);*/
-    al_flip_display();
-
-    auto Baza=new ButtonFactory();
-    auto Strona_glowna=new Page();
+void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
                              vector<string>{"position-x:50vw",
                               "position-y:20vh",
@@ -71,7 +40,8 @@ int main()
     Strona_glowna->addElement<TriangleButton>(*Baza,"Srebro",vector<string>{"position-x:16vw",
                                                                             "position-y:16vh",
                                                                             "font-size:3vw",
-                                                                            "font-maxwidth:12vw",
+                                                                            "font-maxwidth:170px",
+                                                                            "font-minwidth:12vw",
                                                                             "font-name:./fonts/orbitron-black.ttf",
                                                                             "font:#FEBD27FF",
                                                                             "font-shadow:#00000050"},vector<string>{"width:30vw",
@@ -93,7 +63,8 @@ int main()
     Strona_glowna->addElement<TriangleButton>(*Baza,"Brąz",vector<string>{"position-x:18vw",
                                                                             "position-y:18vh",
                                                                             "font-size:3vw",
-                                                                            "font-maxwidth:12vw",
+                                                                            "font-maxwidth:170px",
+                                                                            "font-minwidth:12vw",
                                                                             "font-name:./fonts/orbitron-black.ttf",
                                                                             "font:#FEBD27FF",
                                                                             "font-shadow:#00000050"},vector<string>{"width:30vw",
@@ -111,6 +82,40 @@ int main()
                                                                     f_HTML("#FEF177"),
                                                                     f_HTML("#F25420"),
                                                                     f_HTML("#000000")},"Zarejestruj:D");
+}
+int main()
+{
+    screen_width=800;
+    screen_height=600;
+    al_init();
+    al_install_keyboard();
+    al_init_primitives_addon();
+    al_install_mouse();
+    al_init_font_addon();
+    al_init_ttf_addon();
+
+
+    // ===== KLUCZOWE FLAGI OKNA =====
+    al_set_new_display_flags(
+        ALLEGRO_RESIZABLE |
+        ALLEGRO_WINDOWED
+    );
+
+    ALLEGRO_DISPLAY* display = al_create_display(screen_width, screen_height);//obraz
+    if (!display)
+        return -1;
+
+    al_set_target_backbuffer(display);
+    al_clear_to_color(al_map_rgb(30, 30, 40));
+    /*al_draw_rectangle(10, 10,
+                      static_cast<float>(al_get_display_width(display)) - 10,
+                      static_cast<float>(al_get_display_height(display)) - 10.f,
+                      al_map_rgb(200, 200, 255), 2);*/
+    al_flip_display();
+
+    auto Baza=new ButtonFactory();
+    auto Strona_glowna=new Page();
+    Pagedefault(Baza,Strona_glowna);
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     al_set_window_title(display, "Allegro 5 - Resize / Minimize / Maximize");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -176,9 +181,9 @@ int main()
                 if (Strona_glowna->findButton(mouse_x, mouse_y)) {
                     al_clear_to_color(al_map_rgb(30,30,40));
                     Strona_glowna->buildButtons(display);
-                    hover=false;
                     al_flip_display();
                 }
+                hover=false;
             }
 
             redraw = false;

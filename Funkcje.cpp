@@ -112,6 +112,7 @@ Atom::Atom(ButtonFactory& Factory,
 }
 Button::Button(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
 : Atom(factory,styleID,font_h,res,col,nam,Przycisk) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
+    tryb[0]=false,tryb[1]=false;
 }
 TriangleButton::TriangleButton(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
         : Button(factory,styleID,font_h,res,col, split_manual(nam,":")[0],(split_manual(nam,":")[1]=="D" ? TriangleD : TriangleU)) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
@@ -132,7 +133,7 @@ Atom::Atom(const Atom& Inny, ButtonFactory& factory,const string nazwa, const st
 }
 Button::Button(const Button& Inny, ButtonFactory& factory,string nazwa, string pos_x, string pos_y):
     Atom(Inny,factory,nazwa,pos_x,pos_y)
-{}
+{tryb[0]=false,tryb[1]=false;}
 TriangleButton::TriangleButton(const TriangleButton& Inny, ButtonFactory& factory,string nazwa, string pos_x, string pos_y):
         Button(Inny,factory,nazwa,pos_x,pos_y)
     {}
@@ -155,6 +156,11 @@ void Atom::extractPositionH(const vector<string>& res) {
 ButtonFactory::ButtonFactory() {
 
 }
+
+void Page::makeEmpty() {
+
+}
+
 bool BakeFontToMemoryBitmap(
         ALLEGRO_BITMAP* dest,
         ALLEGRO_FONT* font,
@@ -199,7 +205,7 @@ void Atom::generateFont() {
 void Atom::generateFontH() {
     int fontsizer=actual_value(fontsize);
     if (fontmaxwidth=="") fontmaxwidth="100vh";
-    int w;
+    int w,max,min;
     Start:
     if(Font) al_destroy_font(Font);
     Font=al_load_ttf_font(font.c_str(),fontsizer,0);
@@ -207,12 +213,15 @@ void Atom::generateFontH() {
     {cout<<"Nie udało się załadować fontu\n";
         return;}  // nie udało się załadować
     w=al_get_text_width(Font,name.c_str());
-    if (w>actual_value(fontmaxwidth) && w<actual_value(fontminwidth)) {
-        return;
-    }else if (w>actual_value(fontmaxwidth)) {
+    max=actual_value(fontmaxwidth);
+    min=actual_value(fontminwidth);
+    if (w>max && w<min) {
         fontsizer--;
         goto Start;
-    }else if (w<actual_value(fontminwidth)) {
+    }else if (w>max) {
+        fontsizer--;
+        goto Start;
+    }else if (w<min && max>min) {
         fontsizer++;
         goto Start;
     }

@@ -177,6 +177,7 @@ public:
     const int getKlucz() const{return aktualny_klucz;};
     void createBitmap();
     void changeRanges();
+    void makeEmpty();
     bool findButton(int x, int y);
     bool hover(int x, int y);
     map<int,unique_ptr<Atom>> buttons;
