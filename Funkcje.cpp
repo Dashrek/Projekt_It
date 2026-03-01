@@ -98,6 +98,7 @@ Atom::Atom(ButtonFactory& Factory,
     extractPosition(font_h);
     generateFont();
 }
+
 Button::Button(ButtonFactory& Factory, string styleID,
                const vector<string>& font_h, const vector<string>& res,
                const vector<ALLEGRO_COLOR>& col, string nam,int typ) :
@@ -109,6 +110,79 @@ Atom::Atom(ButtonFactory& Factory,
      const vector<ALLEGRO_COLOR>& col,
      string nam) : Atom(Factory,styleID,font_h,res,col,nam,Pierwiastek){
 
+}
+Timer::Timer(ButtonFactory &Factory, std::string styleID, const vector<std::string> &font_h,
+             const vector<std::string> &res, const vector<ALLEGRO_COLOR> &col, std::string nam) :
+        Atom(Factory,styleID,font_h,res,col,nam,Zegar)
+{
+    extractPosition(font_h);
+    generateFont();
+}
+void getCurrentDateTime(int &h, int &m, int &s, double &stamp)
+{
+    auto now = chrono::system_clock::now();
+    time_t now_c = chrono::system_clock::to_time_t(now);
+    tm local{};
+    #ifdef _WIN32
+        localtime_s(&local, &now_c);      // Windows
+    #else
+        localtime_r(&now_c, &local);      // Linux / Unix
+    #endif
+    ostringstream oss;
+    oss << put_time(&local, "%H:%M:%S");
+    vector <string> t=split_manual(oss.str(),":");
+    h=stoi(t[0]);
+
+    m=stoi(t[1]);
+    s=stoi(t[2]);
+    stamp=al_get_time();
+}
+void Timer::extractPositionH(const vector<std::string> &res) {
+    for (auto i : res) {
+        vector<string> k = split_manual(i, ":");
+        if (k[0] == "position-x") posx = k[1];//pozycja przycisku w X
+        if (k[0] == "position-y") posy = k[1];
+        if (k[0]=="font-size") fontsize=k[1];//rozmiar czcionki
+        if (k[0]=="font-name") font=k[1];//path czcionki
+        if (k[0]=="font") font_color=f_HTML(k[1]); //kolor fontu w html
+        if (k[0]=="font-shadow") font_shadow_color=f_HTML(k[1]); //kolor cienia fontu w html
+        if (k[0]=="font-maxwidth") fontmaxwidth=k[1];
+        if (k[0]=="font-minwidth") fontminwidth=k[1];
+        if (k[0]=="time-format") time_format=k[1];
+        if (k[0]=="crementation"){ inc_decr=(k[1]=="+" ? 1 : 0);}
+        if (k[0]=="real-time") real_time=(k[1]=="+" ? 1:0);
+    }
+    if (!real_time){
+        vector<string> value1= split_manual(time_format,";");
+        vector<string> value2= split_manual(name,";");
+        if (value1.size()==value2.size()){
+                 if(time_format=="hh;mm;ss"){
+                    hours=stoi(value2[0]);
+                    hours=(hours>=24 ? 0 :(hours<0 ? 0 : hours));
+                    minutes=stoi(value2[1]);
+                    minutes=(minutes>=60 ? 0 : (minutes<0 ? 0 : minutes));
+                    seconds=stoi(value2[2]);
+                    seconds=(seconds>=60 ? 0 : (seconds<0 ? 0 : seconds));
+                    timer=al_get_time();
+                 }
+                 else if (time_format=="mm;ss"){//mm;ss
+                     hours=0;
+                     minutes=stoi(value2[0]);
+                     minutes=(minutes>=60 ? 0 : (minutes<0 ? 0 : minutes));
+                     seconds=stoi(value2[1]);
+                     seconds=(seconds>=60 ? 0 : (seconds<0 ? 0 : seconds));
+                 }else{
+                     cout << "Zły format czasu\n";
+                 }
+        }
+    }else{
+
+        if(inc_decr) {
+            getCurrentDateTime(hours, minutes, seconds, timer);
+        }else{
+            cout<<"Zły format czasu\n";
+        }
+    }
 }
 Button::Button(ButtonFactory& factory, string styleID, const vector<string>& font_h,const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam)
 : Atom(factory,styleID,font_h,res,col,nam,Przycisk) {//tworzenie przyciku- wymaga dodanie fabryki przycisków
@@ -158,7 +232,7 @@ ButtonFactory::ButtonFactory() {
 }
 
 void Page::makeEmpty() {
-
+    buttons.clear();
 }
 
 bool BakeFontToMemoryBitmap(
@@ -474,7 +548,7 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
 
     dar.push_back(p->images->normal);
     bool warunek=p->typ==Przycisk;
-    bool warunek1=p->typ==Przycisk || p->typ==Pierwiastek;
+    bool warunek1=p->typ==Przycisk || p->typ==Pierwiastek || p->typ==Zegar;
     bool warunek2=p->typ==Przycisk || p->typ==TriangleD || p->typ==TriangleU;
     bool warunek3= p->typ==TriangleD || p->typ==TriangleU;
     bool warunek4=p->typ==TriangleD;
@@ -579,8 +653,15 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
 }
 Page::Page(){
     przyciski=nullptr;
+    Backbuffer=nullptr;
     aktualny_klucz=1;
     aktywny_przycisk= 0;
+}
+Atom* Page::getButton(int key){
+    auto it = buttons.find(key);
+    if (it != buttons.end())
+    return it->second.get();
+    return nullptr;
 }
 void Page::ReloadFont() {
     const size_t maxThreads = 4;
@@ -621,6 +702,82 @@ void Page::buildButtons(ALLEGRO_DISPLAY *obraz) {
     }
     al_set_target_backbuffer(obraz);
 }
+string zfill(int number, int width)
+{
+    std::ostringstream oss;
+    oss << setw(width) << setfill('0') << number;
+    return oss.str();
+}
+void Timer::thic(){
+    double k; //zmienna zawierająca różnicę czasu;
+    k=al_get_time()-timer;
+    if(inc_decr){//inkrementacja +
+        if (k>=1){
+            seconds+=(int)k;
+            if(seconds>59){
+                minutes+=seconds/60;
+                seconds=seconds%60;
+                if(minutes>59){
+                    hours+=minutes/60;
+                    minutes=minutes%60;
+                    if(hours>23){
+                        hours=0;
+                    }
+                }
+            }
+            timer+=(int)k;
+            name=zfill(hours,2)+":"+ zfill(minutes,2)+":"+zfill(seconds,2);
+            take_event();
+        }
+
+    }else{//dekrementacja -
+        //k=hours*3600+minutes*60+seconds-k;
+        if(k>=1){
+            seconds-=(int)k;
+            if(seconds<0){
+                minutes+=seconds/60-1;
+                seconds=60+seconds;
+                if(minutes<0){
+                    hours+=minutes/60-1;
+                    minutes=60+minutes;
+                    if(hours<0){
+                        hours=23;
+                    }
+                }
+            }
+            timer+=(int)k;
+            name=zfill(hours,2)+":"+ zfill(minutes,2)+":"+zfill(seconds,2);
+            take_event();
+        }
+    }
+}
+void Page::addCycle(int a){
+    cykliczne.emplace_back(a);
+}
+void Page::addActive(int a) {
+    aktywne.emplace_back(a);
+}
+void Page::flushCycle() {
+    if(aktywne.size()>0){
+        ALLEGRO_DISPLAY *old=al_get_current_display();
+        al_set_target_bitmap(Backbuffer);
+        for(auto i:aktywne){
+            buttons[i]->build();
+        }
+        aktywne.clear();
+        al_set_target_backbuffer(old);
+        al_draw_bitmap(Backbuffer,0,0,0);
+        al_flip_display();
+    }
+}
+void Page::thicCycle(){
+    for(auto i:cykliczne){
+        buttons[i]->thic();
+    }
+}
+void Timer::take_event() {
+    checkevent();
+}
 bool Page::hover(int x, int y ){
     ALLEGRO_COLOR punkt=al_get_pixel(przyciski,x,y);
     unsigned char r, g, b, a;
@@ -638,6 +795,28 @@ bool Page::hover(int x, int y ){
         return true;
     }
     return false;
+}
+void Page::saveBackbuffer(ALLEGRO_DISPLAY* display){
+    if (Backbuffer){
+        al_set_target_backbuffer(display);
+        al_draw_bitmap(Backbuffer,0,0,0);
+        al_set_target_bitmap(Backbuffer);
+    }
+}
+void Page::createBackbuffer() {
+    ALLEGRO_DISPLAY * old=al_get_current_display();
+    if (Backbuffer) {
+        al_destroy_bitmap(Backbuffer);
+        Backbuffer=nullptr;
+    }
+    Backbuffer=al_create_bitmap(screen_width,screen_height);
+    al_set_target_bitmap(Backbuffer);
+    al_clear_to_color((al_map_rgba(30,30,40,255)));
+    for (auto const& [klucz, przycisk] : buttons) {
+        przycisk->build();
+    }
+    al_set_target_backbuffer(old);
+    al_draw_bitmap(Backbuffer,0,0,0);
 }
  void Page::createBitmap() {//wersja sekwencyjna
     ALLEGRO_BITMAP * old=al_get_target_bitmap();
@@ -658,22 +837,28 @@ void Page::changeRanges() {
         przycisk->ReaddRange();
     }
 }
-bool Page::findButton(int x, int y) {
+bool Page::findButton(int x, int y, bool &a) {
     for (auto const& [klucz, przycisk] : buttons) {
         if (przycisk->check(x,y)){
             if (klucz!=aktywny_przycisk) {
                 if (aktywny_przycisk!=0) {
                     buttons[aktywny_przycisk]->normal();
+                    aktywne.emplace_back(aktywny_przycisk);//
                 }
                 aktywny_przycisk=klucz;
                 przycisk->hover();
+                aktywne.emplace_back(klucz);//
                 return true;
-            }else return false;
+            }else {
+                a=false;
+                return false;}
         }
     }
     if (aktywny_przycisk!=0) {
         buttons[aktywny_przycisk]->normal();
+        aktywne.emplace_back(aktywny_przycisk);//
         aktywny_przycisk=0;
+        a=true;
     }
     return false;
 }
@@ -757,8 +942,14 @@ bool Page::findButton(int x, int y) {
 }*/
 Page::~Page()
 {
-    al_destroy_bitmap(przyciski);
+    if(przyciski) {
+        al_destroy_bitmap(przyciski);
+    }
     przyciski= nullptr;
+    if(Backbuffer){
+        al_destroy_bitmap(Backbuffer);
+    }
+    Backbuffer= nullptr;
 }
 void trojkat::addMorePointsH(punkt Cx){
     C=Cx;

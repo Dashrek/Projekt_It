@@ -12,6 +12,10 @@
 #include <math.h>
 #include <functional>
 #include <thread>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
@@ -20,6 +24,7 @@ typedef struct {
     ALLEGRO_BITMAP* normal;//wyliczona mapa normal
     ALLEGRO_BITMAP* hover;// wyliczona mapa przy najechaniu
     ALLEGRO_BITMAP* pressed;// wyliczona mapa przy naciśnięciu
+    ALLEGRO_BITMAP* clicked;//Mapa dla przycisków i itemów, które mogą zostać kliknięte i podtrzymane, do czasu, aż nie kliknie się w nie drugi raz. np textfield.
 } ButtonImage;
 typedef struct {
     int x;
@@ -70,8 +75,10 @@ ALLEGRO_COLOR f_HTML(string html_color);
 vector<string> split_manual(string s,const string delimiter);
 void AllegroImageDeleter(ButtonImage* bi);
 void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
+void getCurrentDateTime(int &h, int &m, int &s, double &stamp);
+string zfill(int number, int width);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
-enum Typ{Przycisk,Pierwiastek, PoleTekstowe, TriangleU, TriangleD};
+enum Typ{Przycisk,Pierwiastek, PoleTekstowe, TriangleU, TriangleD, Zegar};
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
@@ -84,42 +91,60 @@ private:
     void createRectangle(shared_ptr<ButtonParameters> p);
 
 };
-class Atom{
-protected:
-    string name;
-    shared_ptr<ButtonParameters> param;
-    string posx, posy;
-    string fontsize,font,fontmaxwidth,fontminwidth;
-    ALLEGRO_COLOR font_color,font_shadow_color;
-    void virtual extractPositionH(const vector<string>& res);
-    void virtual generateFontH();
-    void virtual buildH();
 
-    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);
+class Atom {
+protected:
+    string name;//wyświetlana nazwa w atomie
+    shared_ptr<ButtonParameters> param;//współdzielone tło atomów, przycisków- różnią się tylko napisem, zaś przyciski funkcjami
+    string posx, posy;//miejsce na mapie wyrażone w jednej z trzech jednostek- vh,vw oraz px, znanych z html
+    string fontsize,font,fontmaxwidth,fontminwidth;//kolejno rozmiar czcionki, nazwa czcionki na dysku, maksymalna i miniamalna szerokość czcionki
+    ALLEGRO_COLOR font_color,font_shadow_color;//kolory czcionki i jej cienia;
     ALLEGRO_FONT *Font=nullptr;
+    void virtual extractPositionH(const vector<string>& res);//funkcja wirtualna wyciągająca parametry przycisku niezwiązane z fabryką przycisków/ atomów
+    void virtual generateFontH();// funkcja wirtualna tworząca czcionkę
+    void virtual buildH();//funkcja wirtualna budująca przycisk/atom
+    void virtual take_event(){};
+    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);//Inicjator przycisku- tajny
 public:
     Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
-    Atom(const Atom& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);
-    void build();
-    void extractPosition(const vector<string>& res);
-    void generateFont();
-    void virtual ReaddRange(){};
+    Atom(const Atom& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);//jawne inicjatory przycisków
+    void build();//build używany w inicjatorach- wywołuje buildH
+    void extractPosition(const vector<string>& res);//extract position używany w inicjatorach- wywołuje extractPositionH
+    void generateFont();//generate font używany w inicjatorach- wywołuje generateFontH;
+    void virtual ReaddRange(){};//pusta funkcja pełniąca zadanie w tworzeniu aktualnego zasięgu przycisku na display
     virtual std::unique_ptr<Atom> clone(ButtonFactory& factory,
                                         const std::string& nazwa,
                                         const std::string& pos_x,
                                         const std::string& pos_y) const
     {
         return std::make_unique<Atom>(*this, factory, nazwa, pos_x, pos_y);
-    }
-    virtual void hover(){};
+    }//obiekt klonujący przyciski
+    function <void()> checkevent;
+    virtual void hover(){};//funkcje przycisków w atomie puste, takie jak w html
     virtual void pressed(){};
     virtual void normal(){};
-    virtual void draw(ALLEGRO_COLOR color){};
-    virtual bool check(int x, int y){return false;};
-    virtual ~Atom();
+    virtual void clicked(){};// funkcja dla wciśniętych przycisków
+    virtual void thic(){};//funkcja zmieniająca parametry przycisku w czasie
+    virtual void draw(ALLEGRO_COLOR color){};//funkcja alternatywna dla ReaddRange
+    virtual bool check(int x, int y){return false;};//check funkcja sprawdzająca w przyciskach, czy jest najechany kursorem
+    virtual ~Atom();//destruktor przycisku
+};
+class Timer : public Atom{//klasa, która podaje timer, która rysuje zegar i odlicza czas:
+protected:
+    int hours;//można wyświetlać
+    int minutes;
+    int seconds;
+    string time_format; // hh:mm:ss, mm:ss;
+    bool inc_decr;//inkrementacja,dekrementacja; uzupełnianie czasu przez
+    bool real_time;//inkrementacja uzupełnia czas przez odczyt systemowy, może być tylko w formacie hh mm ss i tylko w inkrementacji- to zegar;
+    //jeżeli name jest pusty, to pobierany jest czas systemowy, a
+    void extractPositionH(const vector<string>& res) override;
+    double timer;
 
-
-
+public:
+    void take_event() override;
+    void thic() override;
+    Timer(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
 };
 class Button : public Atom{
     //aspekty wizualne
@@ -131,7 +156,7 @@ public:
     void hover() override;
     void pressed() override;
     void normal() override;
-    void take_event();
+    void take_event() override;
     void draw(ALLEGRO_COLOR color) override;
     void ReaddRange() override;
     bool check(int x, int y) override;
@@ -150,12 +175,12 @@ protected:
 
     Button(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam,int typ);
 };
+
 class TriangleButton : public Button{
     //aspekty wizualne
 public:
     TriangleButton(ButtonFactory& factory, string styleID,const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
     TriangleButton(const TriangleButton& Inny, ButtonFactory& factory, string nazwa, string pos_x, string pos_y);
-    void take_event();
     void draw(ALLEGRO_COLOR color) override;
     void ReaddRange() override;
     std::unique_ptr<Atom> clone(ButtonFactory& factory,
@@ -170,15 +195,24 @@ protected:
 };
 class Page{
     vector<int> cykliczne;
+    vector<int> aktywne;
     int aktywny_przycisk;
     ALLEGRO_BITMAP *przyciski;
+    ALLEGRO_BITMAP *Backbuffer;
     int aktualny_klucz;
 public:
     const int getKlucz() const{return aktualny_klucz;};
+    void saveBackbuffer(ALLEGRO_DISPLAY *display);
     void createBitmap();
+    void createBackbuffer();
+    Atom* getButton(int key);
+    void addCycle(int a);
+    void addActive(int a);
     void changeRanges();
+    void flushCycle();
     void makeEmpty();
-    bool findButton(int x, int y);
+    void thicCycle();
+    bool findButton(int x, int y, bool &a);
     bool hover(int x, int y);
     map<int,unique_ptr<Atom>> buttons;
     Page();

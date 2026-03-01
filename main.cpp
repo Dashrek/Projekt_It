@@ -82,6 +82,32 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){
                                                                     f_HTML("#FEF177"),
                                                                     f_HTML("#F25420"),
                                                                     f_HTML("#000000")},"Zarejestruj:D");
+    Strona_glowna->addElement<Timer>(*Baza,"Molibden", vector<string>{"position-x:90vw",
+                                                                      "position-y:10vh",
+                                                                      "font-size:2.5vw",
+                                                                      "font-maxwidth:170px",
+                                                                      "font-minwidth:8vw",
+                                                                      "font-name:./fonts/orbitron-black.ttf",
+                                                                      "font:#FEBD27FF",
+                                                                      "font-shadow:#00000050",
+                                                                      "time-format:hh;mm;ss",
+                                                                      "crementation:+",
+                                                                      "real-time:+"},vector<string>{"width:120px",
+                                                                                                    "min-width:10vw",
+                                                                                                    "max-width:192px",
+                                                                                                    "height:10vh",
+                                                                                                    "min-height:20px",
+                                                                                                    "max-height:108px",
+                                                                                                    "border-radius:2px",
+                                                                                                    "border-thickness:0.5vw",
+                                                                                                    "shadow-offset-x:2px",
+                                                                                                    "shadow-offset-y:2px"},vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                                                                                                 f_HTML("#000000"),
+                                                                                                                                                 f_HTML("#FEF177"),
+                                                                                                                                                 f_HTML("#F25420"),f_HTML("#000000")}, "00;00;00");
+    Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+
 }
 int main()
 {
@@ -117,7 +143,7 @@ int main()
     auto Strona_glowna=new Page();
     Pagedefault(Baza,Strona_glowna);
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
-    al_set_window_title(display, "Allegro 5 - Resize / Minimize / Maximize");
+    al_set_window_title(display, "Rubik 2D");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     al_register_event_source(queue, al_get_display_event_source(display));
     al_register_event_source(queue, al_get_keyboard_event_source());
@@ -157,6 +183,23 @@ int main()
         if (redraw && al_is_event_queue_empty(queue)) {
 
             al_set_target_backbuffer(display);
+
+            if(hover){
+                mouse_x=last_ev_axes.mouse.x;
+                mouse_y=last_ev_axes.mouse.y;
+                bool a1=false;
+                if (Strona_glowna->findButton(mouse_x, mouse_y, a1)) {
+                    //al_clear_to_color(al_map_rgb(30,30,40));
+                    //Strona_glowna->buildButtons(display);
+                    //al_flip_display();
+                }
+/*                if (a1){
+                    al_clear_to_color(al_map_rgb(30,30,40));
+                    Strona_glowna->buildButtons(display);
+                    al_flip_display();
+                }*/
+                hover=false;
+            }
             if (resize || start) {
                 al_acknowledge_resize(display);
                 screen_width = al_get_display_width(display);
@@ -168,23 +211,17 @@ int main()
                 al_clear_to_color(al_map_rgb(30, 30, 40));
                 Baza->ReCreateRectangle();
                 Strona_glowna->ReloadFont();
-                Strona_glowna->buildButtons(display);
+                Strona_glowna->createBackbuffer();
+                //Strona_glowna->buildButtons(display);
                 //Strona_glowna->createBitmap();
                 Strona_glowna->changeRanges();
                 resize=false;
                 start=false;
                 al_flip_display();
             }
-            if(hover){
-                mouse_x=last_ev_axes.mouse.x;
-                mouse_y=last_ev_axes.mouse.y;
-                if (Strona_glowna->findButton(mouse_x, mouse_y)) {
-                    al_clear_to_color(al_map_rgb(30,30,40));
-                    Strona_glowna->buildButtons(display);
-                    al_flip_display();
-                }
-                hover=false;
-            }
+            Strona_glowna->thicCycle();
+            Strona_glowna->flushCycle();
+
 
             redraw = false;
         }
