@@ -128,6 +128,7 @@ public:
     virtual void draw(ALLEGRO_COLOR color){};//funkcja alternatywna dla ReaddRange
     virtual bool check(int x, int y){return false;};//check funkcja sprawdzająca w przyciskach, czy jest najechany kursorem
     virtual ~Atom();//destruktor przycisku
+    virtual void add(const ALLEGRO_EVENT& ev){cout<<"Ta funkcja nie jest przeznaczona dla atomu\n";};
 };
 class Timer : public Atom{//klasa, która podaje timer, która rysuje zegar i odlicza czas:
 protected:
@@ -146,6 +147,7 @@ public:
     void thic() override;
     Timer(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
 };
+
 class Button : public Atom{
     //aspekty wizualne
 
@@ -175,7 +177,34 @@ protected:
 
     Button(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam,int typ);
 };
+class TextField: public Atom {
+protected:
+    bool kursor, hoverx,clickedx;
+    int pozycja_kursora;
+    void buildH() override;
+    void extractPositionH(const vector<string> &res) override;
+    double timer;
+    ALLEGRO_COLOR Background, Rama;
+    string name_another;
+    void generateField();
+public:
 
+    void thic() override;
+    TextField(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    TextField(const TextField& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);
+    std::unique_ptr<Atom> clone(ButtonFactory& factory,
+                               const std::string& nazwa,
+                               const std::string& pos_x,
+                               const std::string& pos_y) const override
+    {
+        return std::make_unique<TextField>(*this, factory, nazwa, pos_x, pos_y);
+    }
+    void add(const ALLEGRO_EVENT& ev) override;
+    void hover() override;
+    void clicked() override;
+
+
+};
 class TriangleButton : public Button{
     //aspekty wizualne
 public:

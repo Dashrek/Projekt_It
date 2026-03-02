@@ -140,14 +140,6 @@ void getCurrentDateTime(int &h, int &m, int &s, double &stamp)
 void Timer::extractPositionH(const vector<std::string> &res) {
     for (auto i : res) {
         vector<string> k = split_manual(i, ":");
-        if (k[0] == "position-x") posx = k[1];//pozycja przycisku w X
-        if (k[0] == "position-y") posy = k[1];
-        if (k[0]=="font-size") fontsize=k[1];//rozmiar czcionki
-        if (k[0]=="font-name") font=k[1];//path czcionki
-        if (k[0]=="font") font_color=f_HTML(k[1]); //kolor fontu w html
-        if (k[0]=="font-shadow") font_shadow_color=f_HTML(k[1]); //kolor cienia fontu w html
-        if (k[0]=="font-maxwidth") fontmaxwidth=k[1];
-        if (k[0]=="font-minwidth") fontminwidth=k[1];
         if (k[0]=="time-format") time_format=k[1];
         if (k[0]=="crementation"){ inc_decr=(k[1]=="+" ? 1 : 0);}
         if (k[0]=="real-time") real_time=(k[1]=="+" ? 1:0);
@@ -527,6 +519,10 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
         al_destroy_bitmap(p->images->pressed);
         p->images->pressed= nullptr;
     }
+    if (p->images->clicked) {
+        al_destroy_bitmap(p->images->clicked);
+        p->images->clicked= nullptr;
+    }
     int w= actual_value(p->width);
     int p_w= actual_value(p->minwidth);
     int m_w= actual_value(p->maxwidth);
@@ -547,8 +543,8 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     vector<ALLEGRO_BITMAP*>dar;
 
     dar.push_back(p->images->normal);
-    bool warunek=p->typ==Przycisk;
-    bool warunek1=p->typ==Przycisk || p->typ==Pierwiastek || p->typ==Zegar;
+    bool warunek=p->typ==PoleTekstowe;
+    bool warunek1=p->typ==Przycisk || p->typ==Pierwiastek || p->typ==Zegar||p->typ==PoleTekstowe;
     bool warunek2=p->typ==Przycisk || p->typ==TriangleD || p->typ==TriangleU;
     bool warunek3= p->typ==TriangleD || p->typ==TriangleU;
     bool warunek4=p->typ==TriangleD;
@@ -556,6 +552,9 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     if (warunek2) {
         dar.push_back(p->images->hover);
         dar.push_back(p->images->pressed);
+    }
+    if (warunek) {
+        dar.push_back(p->images->clicked);
     }
     ALLEGRO_BITMAP* bi=nullptr;
     for(int i=0; i<dar.size();i++){
@@ -1023,4 +1022,43 @@ void TriangleButton::ReaddRange() {
 }
 bool Button::check(int x, int y) {
     return t->check(x,y,param->typ);
+}
+
+TextField::TextField(ButtonFactory &Factory, string styleID, const vector<string> &font_h, const vector<string> &res, const vector<ALLEGRO_COLOR> &col, string nam) :
+Atom(Factory, styleID, font_h, res, col, nam, PoleTekstowe)
+{
+    extractPosition(font_h);
+    generateFont();
+}
+
+TextField::TextField(const TextField &Inny, ButtonFactory &factory, const string nazwa, const string pos_x, const string pos_y) :  Atom(Inny,factory,nazwa,pos_x,pos_y){
+    kursor=false;
+    hoverx=false;
+    clickedx=false;
+    timer=al_get_time();
+    pozycja_kursora=0;
+    Background=Inny.Background;
+    Rama=Inny.Rama;
+    pozycja_kursora=name.length();
+    name_another=name;
+    name_another.insert(name_another.begin()+pozycja_kursora,'|');
+}
+
+void TextField::extractPositionH(const vector<string> &res) {
+    for (auto i : res) {
+        vector<string> k = split_manual(i, ":");
+        if (k[0]=="Background-color") Background=f_HTML(k[1]);
+        if (k[0]=="Frame-color") Rama=f_HTML(k[1]);
+    }
+    kursor=false;
+    hoverx=false;
+    clickedx=false;
+    timer=al_get_time();
+    pozycja_kursora=0;
+    pozycja_kursora=0;
+    name_another=name;
+    name_another.insert(name_another.begin()+pozycja_kursora,'|');
+}
+void TextField::generateField() {
+
 }
