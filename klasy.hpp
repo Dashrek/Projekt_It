@@ -66,6 +66,7 @@ typedef struct {
     ALLEGRO_COLOR button;//kolor główny przycisku
     ALLEGRO_COLOR border_hover;//kolor po najechaniu
     ALLEGRO_COLOR border_active;//kolor po naciśnięciu
+    ALLEGRO_COLOR border_clicked;
     ALLEGRO_COLOR shadow_color;//kolor cienia
     int typ;
     shared_ptr<ButtonImage> images;
@@ -185,7 +186,9 @@ protected:
     void extractPositionH(const vector<string> &res) override;
     double timer;
     ALLEGRO_COLOR Background, Rama;
+    ALLEGRO_BITMAP* Ramka;
     string name_another;
+    void generateFontH() override;
     void generateField();
 public:
 

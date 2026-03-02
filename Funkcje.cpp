@@ -474,6 +474,9 @@ void ButtonFactory::updateParams(shared_ptr<ButtonParameters> p, const vector<st
         p->border_active = col[3];
         p->shadow_color = col[4];
     }
+    if(col.size()==6){
+        p->border_clicked=col[5];
+    }
     createRectangle(p);
 }
 void ButtonFactory::ReCreateRectangle() {
@@ -593,6 +596,9 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
             mar.push_back(p->border_hover);
             mar.push_back(p->border_active);
         }
+        if(warunek){
+            mar.push_back(p->border_clicked);
+        }
         for(int i=0;i<dar.size();i++){
             al_set_target_bitmap(dar[i]);
             if(warunek1) {
@@ -648,6 +654,9 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     if(warunek2) {
         p->images->hover = dar[1];
         p->images->pressed = dar[2];
+    }
+    if(warunek){
+        p->images->clicked=dar[3];
     }
 }
 Page::Page(){
@@ -1039,6 +1048,7 @@ TextField::TextField(const TextField &Inny, ButtonFactory &factory, const string
     pozycja_kursora=0;
     Background=Inny.Background;
     Rama=Inny.Rama;
+    Ramka= al_clone_bitmap(Inny.Ramka);
     pozycja_kursora=name.length();
     name_another=name;
     name_another.insert(name_another.begin()+pozycja_kursora,'|');
@@ -1057,7 +1067,50 @@ void TextField::extractPositionH(const vector<string> &res) {
     pozycja_kursora=0;
     pozycja_kursora=0;
     name_another=name;
+    Ramka= nullptr;
     name_another.insert(name_another.begin()+pozycja_kursora,'|');
+}
+void TextField::generateFontH() {
+    int w= actual_value(param->width);
+    int p_w= actual_value(param->minwidth);
+    int m_w= actual_value(param->maxwidth);
+    int h= actual_value(param->height);
+    int p_h= actual_value(param->minheight);
+    int m_h= actual_value(param->maxheight);
+    w=(w<p_w && p_w<=m_w ? p_w : w);
+    w=(w>m_w ? m_w : w);
+    h=(h<p_h && p_h<=m_h ? p_h :h);
+    h=(h>m_h ? m_h : h);
+    al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
+    al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_RGBA_8888);
+    int thic= actual_value(param->border_thickness);
+    int w_offset=actual_value(param->shadow_offset_x);
+    w_offset+=(w_offset==0 ? 0 : (w_offset<0 ? -1 : 1));
+    int h_offset=actual_value(param->shadow_offset_y);
+    h_offset+=(h_offset==0 ? 0 : (h_offset<0 ? -1 : 1));
+
+    int fontsizer=actual_value(fontsize);
+    if (fontmaxwidth=="") fontmaxwidth="100vh";
+    int wi,max,min;
+    Start:
+    if(Font) al_destroy_font(Font);
+    Font=al_load_ttf_font(font.c_str(),fontsizer,0);
+    if (!Font)
+    {cout<<"Nie udało się załadować fontu\n";
+        return;}  // nie udało się załadować
+    wi=al_get_text_width(Font,name.c_str());
+    max=actual_value(fontmaxwidth);
+    min=actual_value(fontminwidth);
+    if (wi>max && wi<min) {
+        fontsizer--;
+        goto Start;
+    }else if (wi>max) {
+        fontsizer--;
+        goto Start;
+    }else if (wi<min && max>min) {
+        fontsizer++;
+        goto Start;
+    }
 }
 void TextField::generateField() {
 
