@@ -153,8 +153,10 @@ int main()
     bool running = true;
     bool redraw = false;
     bool hover=false;
+    bool click=false;
     bool resize=false;
     bool start=true;
+    bool clicked=false;
     int mouse_x,mouse_y;
     while (running) {
         ALLEGRO_EVENT ev,last_ev_axes;
@@ -178,6 +180,12 @@ int main()
                 hover=true;
                 last_ev_axes=ev;
                 break;
+            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+                click=true;
+                break;
+            case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+                clicked=true;
+                break;
         }
 
         if (redraw && al_is_event_queue_empty(queue)) {
@@ -188,7 +196,7 @@ int main()
                 mouse_x=last_ev_axes.mouse.x;
                 mouse_y=last_ev_axes.mouse.y;
                 bool a1=false;
-                if (Strona_glowna->findButton(mouse_x, mouse_y, a1)) {
+                if (Strona_glowna->findButtonHover(mouse_x, mouse_y, a1)) {
                     //al_clear_to_color(al_map_rgb(30,30,40));
                     //Strona_glowna->buildButtons(display);
                     //al_flip_display();
@@ -199,6 +207,14 @@ int main()
                     al_flip_display();
                 }*/
                 hover=false;
+            }
+            if(click){
+                Strona_glowna->findButtonActive(mouse_x,mouse_y,true);
+                click=false;
+            }
+            if(clicked){
+                Strona_glowna->findButtonActive(mouse_x,mouse_y,false);
+                clicked=false;
             }
             if (resize || start) {
                 al_acknowledge_resize(display);

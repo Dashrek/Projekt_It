@@ -80,6 +80,7 @@ void getCurrentDateTime(int &h, int &m, int &s, double &stamp);
 string zfill(int number, int width);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
 enum Typ{Przycisk,Pierwiastek, PoleTekstowe, TriangleU, TriangleD, Zegar};
+enum Status{Normal,Hover,Active,Clicked};
 class ButtonFactory {
     //para klucz(string), wartość(słaby pointer buttonParameters)
     map<string,shared_ptr<ButtonParameters>> styles;
@@ -104,7 +105,6 @@ protected:
     void virtual extractPositionH(const vector<string>& res);//funkcja wirtualna wyciągająca parametry przycisku niezwiązane z fabryką przycisków/ atomów
     void virtual generateFontH();// funkcja wirtualna tworząca czcionkę
     void virtual buildH();//funkcja wirtualna budująca przycisk/atom
-    void virtual take_event(){};
     void take_time_event();
     Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);//Inicjator przycisku- tajny
 public:
@@ -123,6 +123,8 @@ public:
     }//obiekt klonujący przyciski
     function <void()> checkTimeEvent;
     function <void()> checkevent;
+    void virtual take_event(){};
+    int virtual checker(){return 0;};
     virtual void hover(){};//funkcje przycisków w atomie puste, takie jak w html
     virtual void pressed(){};
     virtual void normal(){};
@@ -162,6 +164,7 @@ public:
     void pressed() override;
     void normal() override;
     void clicked() override;
+    int checker() override;
     void take_event() override;
     void draw(ALLEGRO_COLOR color) override;
     void ReaddRange() override;
@@ -242,7 +245,8 @@ public:
     void flushCycle();
     void makeEmpty();
     void thicCycle();
-    bool findButton(int x, int y, bool &a);
+    bool findButtonHover(int x, int y, bool &a);
+    void findButtonActive(int x, int y, bool a);
     bool hover(int x, int y);
     map<int,unique_ptr<Atom>> buttons;
     Page();

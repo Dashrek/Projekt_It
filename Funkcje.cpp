@@ -850,7 +850,7 @@ void Page::changeRanges() {
         przycisk->ReaddRange();
     }
 }
-bool Page::findButton(int x, int y, bool &a) {
+bool Page::findButtonHover(int x, int y, bool &a) {
     for (auto const& [klucz, przycisk] : buttons) {
         if (przycisk->check(x,y)){
             if (klucz!=aktywny_przycisk) {
@@ -859,7 +859,9 @@ bool Page::findButton(int x, int y, bool &a) {
                     aktywne.emplace_back(aktywny_przycisk);//
                 }
                 aktywny_przycisk=klucz;
-                przycisk->hover();
+                if(przycisk->checker()<Active) {
+                    przycisk->hover();
+                }
                 aktywne.emplace_back(klucz);//
                 return true;
             }else {
@@ -874,6 +876,26 @@ bool Page::findButton(int x, int y, bool &a) {
         a=true;
     }
     return false;
+}
+int Button::checker() {
+    if(!tryb[0] && !tryb[1]) return Normal;
+    else if(tryb[0]&& !tryb[1])return Hover;
+    else if(!tryb[0]&&tryb[1])return Active;
+    else if(tryb[0]&&tryb[1])return Clicked;
+    return 0;
+}
+void Page::findButtonActive(int x, int y, bool a) {
+    if (aktywny_przycisk!=0){
+        auto &k=buttons[aktywny_przycisk];
+        if(k->check(x,y)){
+                if(k->checker()==Hover && a){
+                    k->pressed();
+                    aktywne.emplace_back(aktywny_przycisk);}
+                else if (k->checker()==Active && !a){
+                    k->take_event();
+                }
+        }
+    }
 }
 /*void Page::createBitmap() {
 
