@@ -105,6 +105,7 @@ protected:
     void virtual generateFontH();// funkcja wirtualna tworząca czcionkę
     void virtual buildH();//funkcja wirtualna budująca przycisk/atom
     void virtual take_event(){};
+    void take_time_event();
     Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);//Inicjator przycisku- tajny
 public:
     Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
@@ -120,6 +121,7 @@ public:
     {
         return std::make_unique<Atom>(*this, factory, nazwa, pos_x, pos_y);
     }//obiekt klonujący przyciski
+    function <void()> checkTimeEvent;
     function <void()> checkevent;
     virtual void hover(){};//funkcje przycisków w atomie puste, takie jak w html
     virtual void pressed(){};
@@ -159,6 +161,7 @@ public:
     void hover() override;
     void pressed() override;
     void normal() override;
+    void clicked() override;
     void take_event() override;
     void draw(ALLEGRO_COLOR color) override;
     void ReaddRange() override;
@@ -178,7 +181,7 @@ protected:
 
     Button(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam,int typ);
 };
-class TextField: public Atom {
+class TextField: public Button {
 protected:
     bool kursor, hoverx,clickedx;
     int pozycja_kursora;
@@ -189,7 +192,6 @@ protected:
     ALLEGRO_BITMAP* Ramka;
     string name_another;
     void generateFontH() override;
-    void generateField();
 public:
 
     void thic() override;
@@ -203,10 +205,6 @@ public:
         return std::make_unique<TextField>(*this, factory, nazwa, pos_x, pos_y);
     }
     void add(const ALLEGRO_EVENT& ev) override;
-    void hover() override;
-    void clicked() override;
-
-
 };
 class TriangleButton : public Button{
     //aspekty wizualne

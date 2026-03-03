@@ -106,7 +106,7 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){
                                                                                                                                                  f_HTML("#FEF177"),
                                                                                                                                                  f_HTML("#F25420"),f_HTML("#000000")}, "00;00;00");
     Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
 
 }
 int main()
