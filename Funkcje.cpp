@@ -229,6 +229,7 @@ void Page::makeEmpty() {
     aktywne.clear();
     aktywny_przycisk=0;
     aktualny_klucz=1;
+    start=true;
 }
 
 bool BakeFontToMemoryBitmap(
@@ -430,6 +431,7 @@ void AllegroImageDeleter(ButtonImage* bi) {
         if (bi->normal)  al_destroy_bitmap(bi->normal);
         if (bi->hover)   al_destroy_bitmap(bi->hover);
         if (bi->pressed) al_destroy_bitmap(bi->pressed);
+        if (bi->clicked) al_destroy_bitmap(bi->clicked);
         delete bi; // Na końcu usuwamy samą strukturę
     }
 }
@@ -559,7 +561,7 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
     dar.push_back(p->images->normal);
     bool warunek=p->typ==PoleTekstowe;
     bool warunek1=p->typ==Przycisk || p->typ==Pierwiastek || p->typ==Zegar||p->typ==PoleTekstowe;
-    bool warunek2=p->typ==Przycisk || p->typ==TriangleD || p->typ==TriangleU;
+    bool warunek2=p->typ==Przycisk || p->typ==TriangleD || p->typ==TriangleU||p->typ==PoleTekstowe;
     bool warunek3= p->typ==TriangleD || p->typ==TriangleU;
     bool warunek4=p->typ==TriangleD;
     bool warunek5= p->typ==TriangleU;
@@ -675,6 +677,7 @@ Page::Page(){
     Backbuffer=nullptr;
     aktualny_klucz=1;
     aktywny_przycisk= 0;
+    start=true;
 }
 Atom* Page::getButton(int key){
     auto it = buttons.find(key);
@@ -862,8 +865,9 @@ bool Page::findButtonHover(int x, int y, bool &a) {
         if (przycisk->check(x,y)){
             if (klucz!=aktywny_przycisk) {
                 if (aktywny_przycisk!=0) {
+                    if(buttons[aktywny_przycisk]->checker()!=Clicked){
                     buttons[aktywny_przycisk]->normal();
-                    aktywne.emplace_back(aktywny_przycisk);//
+                    aktywne.emplace_back(aktywny_przycisk);}//
                 }
                 aktywny_przycisk=klucz;
                 if(przycisk->checker()<Active) {
@@ -1021,7 +1025,7 @@ trojkat::trojkat(punkt Ax, punkt Bx, punkt Cx ) : A(Ax), B(Bx){
 kwadrat::kwadrat(punkt Ax, punkt Bx, punkt Cx) : trojkat(Ax,Bx,Cx){};
 void kwadrat::addMorePointsH(punkt Cx) {};
 bool kwadrat::check(int x, int y, int typ) {
-    if(typ==Przycisk){
+    if(typ==Przycisk || typ==PoleTekstowe){
         return y>=A.y && x>=A.x && y<=B.y && x<=B.x;
     }
     cout << "To nie jest przycisk.\n";
@@ -1127,12 +1131,11 @@ void TextField::generateFontH() {
     }
     int k=actual_value(param->border_thickness);
     Ramka=al_create_bitmap(w*4/5+2*k,h/2+2*k);
-    ALLEGRO_DISPLAY* dar= al_get_current_display();
+
     al_set_target_bitmap(Ramka);
     al_clear_to_color(f_HTML("#00000000"));
     al_draw_filled_rectangle(k,k,w*4/5+k,h/2+k,Background);
     al_draw_rectangle(k/2,k/2,w*4/5+3*k/2,h/2+3*k/2,Rama,k);
-    al_set_target_backbuffer(dar);
     int fontsizer=actual_value(fontsize);
     if (fontmaxwidth=="") fontmaxwidth="100vh";
     int wi,max,min;
@@ -1176,15 +1179,16 @@ void TextField::buildH() {
     int w=al_get_text_width(Font,name.c_str());
     int h=al_get_font_line_height(Font);
     al_draw_text(Font, font_shadow_color,actual_value(posx)-0.5*s_w+actual_value(param->shadow_offset_x)+actual_value("5px"),actual_value(posy)-0.5*h+actual_value(param->shadow_offset_y),ALLEGRO_ALIGN_LEFT,(!kursor? name.c_str(): name_another.c_str()));
-    al_draw_text(Font, font_color,actual_value(posx)-0.5*w,actual_value(posy)-0.5*h,ALLEGRO_ALIGN_LEFT,(!kursor ? name.c_str():name_another.c_str()));
+    al_draw_text(Font, font_color,actual_value(posx)-0.5*s_w,actual_value(posy)-0.5*h,ALLEGRO_ALIGN_LEFT,(!kursor ? name.c_str():name_another.c_str()));
 }
 void TextField::thic() {
     double k=al_get_time()-timer;
-    if (k>0.5) {
+    if (k>1) {
         kursor=(kursor+1)%2;
         timer+=((int)k)/1;
         if (tryb[1]&&tryb[0]) {
-            take_event();
+            take_time_event();
+            cout<<"Dupa1\n";
         }
     }
 }

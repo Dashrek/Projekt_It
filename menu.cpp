@@ -24,7 +24,9 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca
                               f_HTML("#F25420"),
                               f_HTML("#000000")},"Nowa gra Solo");//Przycisk nowej gry solo
     cout << Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->name<< "Dupa\n";
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[page=Strona_glowna,factory=Baza]{PageNewGameSolo(factory,page);};
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[page=Strona_glowna,factory=Baza]{
+        PageNewGameSolo(factory,page);
+    };
     //Przycisk nowej gry online
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Nowa Gra Online","50vw", "50vh");
     //Przycisk Nowej Gry Rankingowej
@@ -110,9 +112,30 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
                                                                         "font-name:./fonts/orbitron-black.ttf",
                                                                         "font:#7a2160",
                                                                         "font-shadow:#290b20",
-                                                                        "font-maxwidth:15vw"}, vector<string>{"width:17vw","min-width:17vw","max-width:17vw",
-                                                                                                                "height:10vh","min-height:10vh","max-height:10vh",
-                                                                                                                "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:3px","shadow-offset-y:3px"},
-                                                                                                                vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Podaj słowo:");
-    //Strona_glowna->addElement<TextField>(Baza,"")
+                                                                        "font-maxwidth:15vw"},
+                                                                    vector<string>{"width:17vw","min-width:17vw","max-width:17vw",
+                                                                        "height:10vh","min-height:10vh","max-height:10vh",
+                                                                        "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                                                        vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Podaj słowo:");
+    Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:50vw",
+                                                                          "position-y:32vh",
+                                                                          "font-size:5vh",
+                                                                          "font-name:./fonts/orbitron-black.ttf",
+                                                                          "font:#7a2160",
+                                                                          "font-shadow:#290b20",
+                                                                          "font-maxwidth:30vw",
+                                                                          "Background-color:#f0f0f0",
+                                                                          "Frame-color:#101010"
+                                                                          },vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                                                           "height:10vh","min-height:10vh","max-height:10vh",
+                                                                                           "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                                                            vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                                                  f_HTML("#000000"),
+                                                                                                  f_HTML("#FEF177"),
+                                                                                                  f_HTML("#F25420"),f_HTML("#000000"),
+                                                                                                  f_HTML("#beff56")}, "Wpisz słowo");
+    Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[Strona_glowna,ten=Strona_glowna->getKlucz()-1]{(Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->buttons[ten]->normal():Strona_glowna->buttons[ten]->clicked());};
+
 }

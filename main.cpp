@@ -46,7 +46,7 @@ int main()
     bool hover=false;
     bool click=false;
     bool resize=false;
-    bool start=true;
+    Strona_glowna->start=true;
     bool clicked=false;
     int mouse_x,mouse_y;
     while (running) {
@@ -107,7 +107,7 @@ int main()
                 Strona_glowna->findButtonActive(mouse_x,mouse_y,false);
                 clicked=false;
             }
-            if (resize || start) {
+            if (resize || Strona_glowna->start) {
                 al_acknowledge_resize(display);
                 screen_width = al_get_display_width(display);
                 screen_height = al_get_display_height(display);
@@ -123,7 +123,7 @@ int main()
                 //Strona_glowna->createBitmap();
                 Strona_glowna->changeRanges();
                 resize=false;
-                start=false;
+                Strona_glowna->start=false;
                 al_flip_display();
             }
             Strona_glowna->thicCycle();

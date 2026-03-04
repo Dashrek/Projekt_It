@@ -199,7 +199,7 @@ protected:
 public:
 
     void thic() override;
-    TextField(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    TextField(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam);
     TextField(const TextField& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);
     std::unique_ptr<Atom> clone(ButtonFactory& factory,
                                const std::string& nazwa,
@@ -238,6 +238,7 @@ public:
     const int getKlucz() const{return aktualny_klucz;};
     void saveBackbuffer(ALLEGRO_DISPLAY *display);
     void createBitmap();
+    bool start;
     void createBackbuffer();
     Atom* getButton(int key);
     void addCycle(int a);
