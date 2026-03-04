@@ -1,5 +1,5 @@
 APPNAME=myprog.exe
-SRCS=main.cpp Funkcje.cpp
+SRCS=main.cpp menu.cpp Funkcje.cpp
 #i686-w64-mingw32-gcc
 CC=g++ -finput-charset=UTF-8 -fextended-identifiers
 CFLAGS=-g -O3 -o $(APPNAME) -Wall

@@ -16,6 +16,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <cstdio>
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
@@ -96,7 +97,7 @@ private:
 
 class Atom {
 protected:
-    string name;//wyświetlana nazwa w atomie
+    //wyświetlana nazwa w atomie
     shared_ptr<ButtonParameters> param;//współdzielone tło atomów, przycisków- różnią się tylko napisem, zaś przyciski funkcjami
     string posx, posy;//miejsce na mapie wyrażone w jednej z trzech jednostek- vh,vw oraz px, znanych z html
     string fontsize,font,fontmaxwidth,fontminwidth;//kolejno rozmiar czcionki, nazwa czcionki na dysku, maksymalna i miniamalna szerokość czcionki
@@ -106,9 +107,10 @@ protected:
     void virtual generateFontH();// funkcja wirtualna tworząca czcionkę
     void virtual buildH();//funkcja wirtualna budująca przycisk/atom
     void take_time_event();
-    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="",int typ=Pierwiastek);//Inicjator przycisku- tajny
+    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam,int typ);//Inicjator przycisku- tajny
 public:
-    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h={}, const vector<string>& res={}, const vector<ALLEGRO_COLOR>& col={}, string nam="");
+    string name;
+    Atom(ButtonFactory& Factory, string styleID, const vector<string>& font_h, const vector<string>& res, const vector<ALLEGRO_COLOR>& col, string nam);
     Atom(const Atom& Inny, ButtonFactory& factory, const string nazwa, const string pos_x, const string pos_y);//jawne inicjatory przycisków
     void build();//build używany w inicjatorach- wywołuje buildH
     void extractPosition(const vector<string>& res);//extract position używany w inicjatorach- wywołuje extractPositionH
@@ -177,7 +179,6 @@ public:
         return std::make_unique<Button>(*this, factory, nazwa, pos_x, pos_y);
     }
 protected:
-    function <void()> checkevent;
     unique_ptr<trojkat> t;
     bool tryb[2];
     void buildH() override;

@@ -225,6 +225,10 @@ ButtonFactory::ButtonFactory() {
 
 void Page::makeEmpty() {
     buttons.clear();
+    cykliczne.clear();
+    aktywne.clear();
+    aktywny_przycisk=0;
+    aktualny_klucz=1;
 }
 
 bool BakeFontToMemoryBitmap(
@@ -471,9 +475,12 @@ void ButtonFactory::updateParams(shared_ptr<ButtonParameters> p, const vector<st
         p->typ=typ;
     }
     // Aktualizacja kolorów tylko jeśli wektor nie jest pusty
-    if (col.size() >= 5) {
+    if (col.size()>=3) {
         p->button = col[0];
         p->border_normal = col[1];
+        p->shadow_color = col[2];
+    }
+    if (col.size() >= 5) {
         p->border_hover = col[2];
         p->border_active = col[3];
         p->shadow_color = col[4];
@@ -886,13 +893,14 @@ int Button::checker() {
 }
 void Page::findButtonActive(int x, int y, bool a) {
     if (aktywny_przycisk!=0){
-        auto &k=buttons[aktywny_przycisk];
-        if(k->check(x,y)){
-                if(k->checker()==Hover && a){
-                    k->pressed();
+
+        if(buttons[aktywny_przycisk]->check(x,y)){
+                if(buttons[aktywny_przycisk]->checker()==Hover && a){
+                    buttons[aktywny_przycisk]->pressed();
                     aktywne.emplace_back(aktywny_przycisk);}
-                else if (k->checker()==Active && !a){
-                    k->take_event();
+                else if (buttons[aktywny_przycisk]->checker()==Active && !a){
+                    cout<<buttons[aktywny_przycisk]->name<<"\n";
+                    buttons[aktywny_przycisk]->take_event();
                 }
         }
     }
