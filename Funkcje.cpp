@@ -677,6 +677,7 @@ Page::Page(){
     Backbuffer=nullptr;
     aktualny_klucz=1;
     aktywny_przycisk= 0;
+    tekstowy_klucz=0;
     start=true;
 }
 Atom* Page::getButton(int key){
@@ -864,6 +865,7 @@ bool Page::findButtonHover(int x, int y, bool &a) {
     for (auto const& [klucz, przycisk] : buttons) {
         if (przycisk->check(x,y)){
             if (klucz!=aktywny_przycisk) {
+                tekstowy_klucz=0;
                 if (aktywny_przycisk!=0) {
                     if(buttons[aktywny_przycisk]->checker()!=Clicked){
                     buttons[aktywny_przycisk]->normal();
@@ -884,9 +886,13 @@ bool Page::findButtonHover(int x, int y, bool &a) {
         buttons[aktywny_przycisk]->normal();
         aktywne.emplace_back(aktywny_przycisk);//
         aktywny_przycisk=0;
+        tekstowy_klucz=0;
         a=true;
     }
     return false;
+}
+void Page::addTK(int a){
+    tekstowy_klucz=a;
 }
 int Button::checker() {
     if(!tryb[0] && !tryb[1]) return Normal;
@@ -1107,7 +1113,7 @@ void TextField::extractPositionH(const vector<string> &res) {
     clickedx=false;
     timer=al_get_time();
     pozycja_kursora=0;
-    pozycja_kursora=0;
+    pozycja_kursora=name.size();
     name_another=name;
     Ramka= nullptr;
     name_another.insert(name_another.begin()+pozycja_kursora,'|');
@@ -1188,7 +1194,6 @@ void TextField::thic() {
         timer+=((int)k)/1;
         if (tryb[1]&&tryb[0]) {
             take_time_event();
-            cout<<"Dupa1\n";
         }
     }
 }
@@ -1196,7 +1201,12 @@ void TextField::thic() {
 void Atom::take_time_event() {
     checkTimeEvent();
 }
-
+string another_name(string nam, int pozycja_kursora){
+    string name_another;
+    name_another=nam;
+    name_another.insert(name_another.begin()+pozycja_kursora,'|');
+    return name_another;
+}
 void TextField::add(const ALLEGRO_EVENT& ev) {
     if (ev.type == ALLEGRO_EVENT_KEY_CHAR)
     {
@@ -1231,5 +1241,6 @@ void TextField::add(const ALLEGRO_EVENT& ev) {
                     pozycja_kursora++;
                 }
         }
+        name_another= another_name(name,pozycja_kursora);
     }
 }

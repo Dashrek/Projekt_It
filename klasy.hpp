@@ -79,6 +79,7 @@ void AllegroImageDeleter(ButtonImage* bi);
 void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, int h);
 void getCurrentDateTime(int &h, int &m, int &s, double &stamp);
 string zfill(int number, int width);
+string another_name(string nam, int pozycja_kursora);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
 enum Typ{Przycisk,Pierwiastek, PoleTekstowe, TriangleU, TriangleD, Zegar};
 enum Status{Normal,Hover,Active,Clicked};
@@ -234,7 +235,11 @@ class Page{
     ALLEGRO_BITMAP *przyciski;
     ALLEGRO_BITMAP *Backbuffer;
     int aktualny_klucz;
+
 public:
+    Page();
+    ~Page();
+    int tekstowy_klucz;
     const int getKlucz() const{return aktualny_klucz;};
     void saveBackbuffer(ALLEGRO_DISPLAY *display);
     void createBitmap();
@@ -249,10 +254,10 @@ public:
     void thicCycle();
     bool findButtonHover(int x, int y, bool &a);
     void findButtonActive(int x, int y, bool a);
+    void addTK(int a);
     bool hover(int x, int y);
     map<int,unique_ptr<Atom>> buttons;
-    Page();
-    ~Page();
+
     template<typename T, typename... Args> void addElement(Args&&... args){
         buttons[aktualny_klucz] =
                 std::make_unique<T>(std::forward<Args>(args)...);

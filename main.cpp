@@ -77,6 +77,10 @@ int main()
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 clicked=true;
                 break;
+            case ALLEGRO_EVENT_KEY_CHAR:
+                if(Strona_glowna->tekstowy_klucz>0){
+                    Strona_glowna->buttons[Strona_glowna->tekstowy_klucz]->add(ev);
+                }
         }
 
         if (redraw && al_is_event_queue_empty(queue)) {

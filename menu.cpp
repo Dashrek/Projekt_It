@@ -103,7 +103,14 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca
     Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
     Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
 }
-
+void add_last_textfield(Page * Strona_glowna){
+    Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[Strona_glowna,ten=Strona_glowna->getKlucz()-1]{
+        (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->buttons[ten]->normal():Strona_glowna->buttons[ten]->clicked());
+        (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->addTK(ten):Strona_glowna->addTK(0));
+    };
+}
 void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
     Strona_glowna->makeEmpty();
     Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:42.5vw",
@@ -134,8 +141,9 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
                                                                                                   f_HTML("#FEF177"),
                                                                                                   f_HTML("#F25420"),f_HTML("#000000"),
                                                                                                   f_HTML("#beff56")}, "Wpisz słowo");
-    Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[Strona_glowna,ten=Strona_glowna->getKlucz()-1]{(Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->buttons[ten]->normal():Strona_glowna->buttons[ten]->clicked());};
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj liczbę liter w wierszu","42.5vw", "44vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz liczbę","50vw", "56vh");
+    add_last_textfield(Strona_glowna);
 
 }
