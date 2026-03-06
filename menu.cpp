@@ -1,5 +1,7 @@
 #include "menu.hpp"
-
+#define add_event Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent
+#define Inny *Strona_glowna->buttons[Strona_glowna->getKlucz()-1]
+#define add_time_event Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent
 void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca menu główne
     Strona_glowna->makeEmpty();
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
@@ -25,13 +27,13 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca
                               f_HTML("#F25420"),
                               f_HTML("#000000")},"Nowa gra Solo");//Przycisk nowej gry solo
 
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[page=Strona_glowna,factory=Baza]{
+    add_event=[page=Strona_glowna,factory=Baza]{
         PageNewGameSolo(factory,page);
     };
     //Przycisk nowej gry online
-    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Nowa Gra Online","50vw", "50vh");
+    Strona_glowna->addButton(*Baza,Inny,"Nowa Gra Online","50vw", "50vh");
     //Przycisk Nowej Gry Rankingowej
-    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Gra Rankingowa","50vw", "80vh");
+    Strona_glowna->addButton(*Baza,Inny,"Gra Rankingowa","50vw", "80vh");
     //Przycisk do zalogowania na nowe konto
     Strona_glowna->addElement<TriangleButton>(*Baza,"Srebro",vector<string>{"position-x:16vw",
                                                                             "position-y:16vh",
@@ -102,12 +104,12 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca
                                                                                                                                                  f_HTML("#FEF177"),
                                                                                                                                                  f_HTML("#F25420"),f_HTML("#000000")}, "00;00;00");
     Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+    add_time_event=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
 }
 void add_last_textfield(Page * Strona_glowna){
     Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
-    Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[Strona_glowna,ten=Strona_glowna->getKlucz()-1]{
+    add_time_event=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+    add_event=[Strona_glowna,ten=Strona_glowna->getKlucz()-1]{
         (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->buttons[ten]->normal():Strona_glowna->buttons[ten]->clicked());
         (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->addTK(ten):Strona_glowna->addTK(0));
     };
@@ -147,16 +149,16 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz liczbę","50vw", "56vh");
     add_last_textfield(Strona_glowna);
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
-    vector<string>{"position-x:50vw",
-                                                 "position-y:32vh",
+    vector<string>{"position-x:40vw",
+                                                 "position-y:68vh",
                                                  "font-size:5vh",
                                                  "font-name:./fonts/orbitron-black.ttf",
                                                  "font:#7a2160",
                                                  "font-shadow:#290b20",
-                                                 "font-maxwidth:30vw",
+                                                 "font-maxwidth:16vw",
                                                  "Background-color:#f0f0f0",
                                                  "Frame-color:#101010"
-                                                 },vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                 },vector<string>{"width:17.5vw","min-width:17.5vw","max-width:17.5vw",
                                                                   "height:10vh","min-height:10vh","max-height:10vh",
                                                                   "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
                                                    vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
@@ -164,5 +166,7 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
                                                                          f_HTML("#FEF177"),
                                                                          f_HTML("#F25420"),f_HTML("#000000"),
                                                                          f_HTML("#beff56")},"Powrót");
-
+    add_event=[Strona_glowna,Baza]{ Pagedefault(Baza,Strona_glowna);};
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Start","60vw","68vh");
+    
 }

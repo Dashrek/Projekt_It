@@ -1207,6 +1207,19 @@ string another_name(string nam, int pozycja_kursora){
     name_another.insert(name_another.begin()+pozycja_kursora,'|');
     return name_another;
 }
+size_t next_utf8(const std::string& s, size_t i) {
+    i++;
+    while (i < s.size() && (s[i] & 0xC0) == 0x80)
+        i++;
+    return i;
+}
+
+size_t prev_utf8(const std::string& s, size_t i) {
+    i--;
+    while (i > 0 && (s[i] & 0xC0) == 0x80)
+        i--;
+    return i;
+}
 void TextField::add(const ALLEGRO_EVENT& ev) {
     if (ev.type == ALLEGRO_EVENT_KEY_CHAR)
     {
@@ -1215,30 +1228,36 @@ void TextField::add(const ALLEGRO_EVENT& ev) {
             case ALLEGRO_KEY_BACKSPACE:
                 if (pozycja_kursora > 0)
                 {
-                    name.erase(pozycja_kursora - 1, 1);
-                    pozycja_kursora--;
+                    int start = prev_utf8(name, pozycja_kursora);
+                    name.erase(start, pozycja_kursora - start);
+                    pozycja_kursora = start;
                 }
                 break;
 
             case ALLEGRO_KEY_DELETE:
                 if (pozycja_kursora < name.size())
-                    name.erase(pozycja_kursora, 1);
+                {
+                    int end = next_utf8(name, pozycja_kursora);
+                    name.erase(pozycja_kursora, end - pozycja_kursora);
+                }
                 break;
 
             case ALLEGRO_KEY_LEFT:
-                if (pozycja_kursora > 0) pozycja_kursora--;
+                if (pozycja_kursora > 0) pozycja_kursora=prev_utf8(name, pozycja_kursora);
                 break;
 
             case ALLEGRO_KEY_RIGHT:
-                if (pozycja_kursora < name.size()) pozycja_kursora++;
+                if (pozycja_kursora < name.size()) pozycja_kursora=next_utf8(name, pozycja_kursora);
                 break;
 
             default:
                 if (ev.keyboard.unichar >= 32)
                 {
-                    name.insert(pozycja_kursora, 1,
-                                static_cast<char>(ev.keyboard.unichar));
-                    pozycja_kursora++;
+                    char utf8[5] = {0};
+                    int len = al_utf8_encode(utf8, ev.keyboard.unichar);
+
+                    name.insert(pozycja_kursora, utf8, len);
+                    pozycja_kursora += len;
                 }
         }
         name_another= another_name(name,pozycja_kursora);

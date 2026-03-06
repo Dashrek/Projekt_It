@@ -2,6 +2,10 @@
 
 int main()
 {
+    #ifdef _WIN32
+        SetConsoleOutputCP(CP_UTF8);
+        SetConsoleCP(CP_UTF8);
+    #endif
     screen_width=800;
     screen_height=600;
     al_init();
@@ -80,6 +84,7 @@ int main()
             case ALLEGRO_EVENT_KEY_CHAR:
                 if(Strona_glowna->tekstowy_klucz>0){
                     Strona_glowna->buttons[Strona_glowna->tekstowy_klucz]->add(ev);
+                    Strona_glowna->addActive(Strona_glowna->tekstowy_klucz);
                 }
         }
 

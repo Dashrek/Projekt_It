@@ -17,6 +17,9 @@
 #include <iomanip>
 #include <sstream>
 #include <cstdio>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
 
