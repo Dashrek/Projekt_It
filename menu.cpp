@@ -1,4 +1,5 @@
 #include "menu.hpp"
+
 void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca menu główne
     Strona_glowna->makeEmpty();
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
@@ -23,7 +24,7 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca
                               f_HTML("#FEF177"),
                               f_HTML("#F25420"),
                               f_HTML("#000000")},"Nowa gra Solo");//Przycisk nowej gry solo
-    cout << Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->name<< "Dupa\n";
+
     Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkevent=[page=Strona_glowna,factory=Baza]{
         PageNewGameSolo(factory,page);
     };
@@ -145,5 +146,23 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj liczbę liter w wierszu","42.5vw", "44vh");
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz liczbę","50vw", "56vh");
     add_last_textfield(Strona_glowna);
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
+    vector<string>{"position-x:50vw",
+                                                 "position-y:32vh",
+                                                 "font-size:5vh",
+                                                 "font-name:./fonts/orbitron-black.ttf",
+                                                 "font:#7a2160",
+                                                 "font-shadow:#290b20",
+                                                 "font-maxwidth:30vw",
+                                                 "Background-color:#f0f0f0",
+                                                 "Frame-color:#101010"
+                                                 },vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                                  "height:10vh","min-height:10vh","max-height:10vh",
+                                                                  "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                                   vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                         f_HTML("#000000"),
+                                                                         f_HTML("#FEF177"),
+                                                                         f_HTML("#F25420"),f_HTML("#000000"),
+                                                                         f_HTML("#beff56")},"Powrót");
 
 }

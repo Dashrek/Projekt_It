@@ -1,1 +1,1 @@
-CMakeLists.txt not found in C:\Users\User\CLionProjects\Projekt_It Select CMakeLists.txt
+CMakeLists.txt not found in /home/karol/CLionProjects/Projekt_It Select CMakeLists.txt
