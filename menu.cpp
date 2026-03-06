@@ -79,6 +79,9 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna){//Funkcja rysująca
                                                                     f_HTML("#FEF177"),
                                                                     f_HTML("#F25420"),
                                                                     f_HTML("#000000")},"Zarejestruj:D");
+    add_event=[page=Strona_glowna,factory=Baza]{
+        zarejestruj(factory,page);
+    };
     //Timer
     Strona_glowna->addElement<Timer>(*Baza,"Molibden", vector<string>{"position-x:90vw",
                                                                       "position-y:10vh",
@@ -113,6 +116,70 @@ void add_last_textfield(Page * Strona_glowna){
         (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->buttons[ten]->normal():Strona_glowna->buttons[ten]->clicked());
         (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->addTK(ten):Strona_glowna->addTK(0));
     };
+}
+void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna) {
+    Strona_glowna->makeEmpty();
+    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:33.5vw",
+                                                                        "position-y:20vh",
+                                                                        "font-size:7vh",
+                                                                        "font-name:./fonts/orbitron-black.ttf",
+                                                                        "font:#7a2160",
+                                                                        "font-shadow:#290b20",
+                                                                        "font-maxwidth:15vw"},
+                                                                    vector<string>{"width:17vw","min-width:17vw","max-width:17vw",
+                                                                        "height:10vh","min-height:10vh","max-height:10vh",
+                                                                        "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                                                        vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Podaj nick:");
+    Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:61vw",
+                                                                          "position-y:20vh",
+                                                                          "font-size:5vh",
+                                                                          "font-name:./fonts/orbitron-black.ttf",
+                                                                          "font:#7a2160",
+                                                                          "font-shadow:#290b20",
+                                                                          "font-maxwidth:30vw",
+                                                                          "Background-color:#f0f0f0",
+                                                                          "Frame-color:#101010"
+                                                                          },vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                                                           "height:10vh","min-height:10vh","max-height:10vh",
+                                                                                           "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                                                            vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                                                  f_HTML("#000000"),
+                                                                                                  f_HTML("#FEF177"),
+                                                                                                  f_HTML("#F25420"),f_HTML("#000000"),
+                                                                                                  f_HTML("#beff56")}, "Wpisz nick");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj e-mail:","33.5vw", "32vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz e-mail","61vw", "32vh");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Powtórz e-mail:","33.5vw", "44vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz e-mail","61vw", "44vh");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj hasło:","33.5vw", "56vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz hasło","61vw", "56vh");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Powtórz hasło:","33.5vw", "68vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz hasło","61vw", "68vh");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
+vector<string>{"position-x:40vw",
+                                             "position-y:80vh",
+                                             "font-size:5vh",
+                                             "font-name:./fonts/orbitron-black.ttf",
+                                             "font:#7a2160",
+                                             "font-shadow:#290b20",
+                                             "font-maxwidth:16vw",
+                                             "Background-color:#f0f0f0",
+                                             "Frame-color:#101010"
+                                             },vector<string>{"width:17.5vw","min-width:17.5vw","max-width:17.5vw",
+                                                              "height:10vh","min-height:10vh","max-height:10vh",
+                                                              "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                               vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                     f_HTML("#000000"),
+                                                                     f_HTML("#FEF177"),
+                                                                     f_HTML("#F25420"),f_HTML("#000000"),
+                                                                     f_HTML("#beff56")},"Powrót");
+    add_event=[Strona_glowna,Baza]{ Pagedefault(Baza,Strona_glowna);};
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Zarejestruj.","60vw","80vh");
 }
 void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna) {
     Strona_glowna->makeEmpty();
