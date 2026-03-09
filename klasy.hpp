@@ -10,6 +10,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
 #include <math.h>
+#include <cstdlib>
 #include <functional>
 #include <thread>
 #include <chrono>
@@ -83,6 +84,8 @@ void AllegroGaussFilter(ALLEGRO_BITMAP* Source, ALLEGRO_BITMAP* Target, int w, i
 void getCurrentDateTime(int &h, int &m, int &s, double &stamp);
 string zfill(int number, int width);
 string another_name(string nam, int pozycja_kursora);
+size_t next_utf8(const std::string& s, size_t i);
+size_t prev_utf8(const std::string& s, size_t i);
 bool BakeFontToMemoryBitmap(ALLEGRO_BITMAP* dest,ALLEGRO_FONT* font,const string& text,ALLEGRO_COLOR color,int x = 0,int y = 0);
 enum Typ{Przycisk,Pierwiastek, PoleTekstowe, TriangleU, TriangleD, Zegar};
 enum Status{Normal,Hover,Active,Clicked};

@@ -36,7 +36,8 @@ int main()
 
     auto Baza=new ButtonFactory();
     auto Strona_glowna=new Page();
-    Pagedefault(Baza,Strona_glowna);
+    Game *Gra=new Game();
+    Pagedefault(Baza,Strona_glowna, Gra);
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     al_set_window_title(display, "Rubik 2D");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
