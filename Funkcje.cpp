@@ -274,6 +274,7 @@ void Atom::generateFont() {
     generateFontH();
 }
 void Atom::generateFontH() {
+    lock_guard<mutex> lock(font_mutex);
     int fontsizer=actual_value(fontsize);
     if (fontmaxwidth=="") fontmaxwidth="100vh";
     int w,max,min;
@@ -531,7 +532,7 @@ void ButtonFactory::createRectangle(shared_ptr<ButtonParameters> p) {
         al_destroy_bitmap(p->images->hover);
         p->images->hover= nullptr;
     }
-    if (p->images->hover) {
+    if (p->images->pressed) {
         al_destroy_bitmap(p->images->pressed);
         p->images->pressed= nullptr;
     }

@@ -21,7 +21,11 @@ int main()
         ALLEGRO_RESIZABLE |
         ALLEGRO_WINDOWED
     );
+    //al_set_new_display_flags(ALLEGRO_PROGRAMMABLE_PIPELINE);
 
+#ifdef ALLEGRO_GTK_TOPLEVEL
+    al_set_new_display_flags(ALLEGRO_GTK_TOPLEVEL);
+#endif
     ALLEGRO_DISPLAY* display = al_create_display(screen_width, screen_height);//obraz
     if (!display)
         return -1;

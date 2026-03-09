@@ -18,12 +18,13 @@
 #include <iomanip>
 #include <sstream>
 #include <cstdio>
+#include <mutex>
 #ifdef _WIN32
 #include <windows.h>
 #endif
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
-
+static mutex font_mutex;
 inline int screen_width, screen_height;
 typedef struct {
     ALLEGRO_BITMAP* normal;//wyliczona mapa normal
