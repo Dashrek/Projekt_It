@@ -3,6 +3,18 @@
 #define Inny *Strona_glowna->buttons[Strona_glowna->getKlucz()-1]
 #define poprzedni {Strona_glowna->getKlucz()-1,Strona_glowna->buttons[Strona_glowna->getKlucz()-1].get()}
 #define add_time_event Strona_glowna->buttons[Strona_glowna->getKlucz()-1]->checkTimeEvent
+#define ostatni_przycisk(at) Strona_glowna->buttons[Strona_glowna->getKlucz()-1-at]
+string replaceAll(string str, const std::string& from, const std::string& to) {
+    if(from.empty()) return str; // Zabezpieczenie przed pustym ciągiem
+    size_t start_pos = 0;
+    string dar=str;
+    // Znajdź i zamień wszystkie wystąpienia
+    while((start_pos = dar.find(from, start_pos)) != std::string::npos) {
+        dar.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // Przeskocz do końca nowo wstawionego fragmentu
+    }
+    return dar;
+}
 moved::moved(bool dir, int xx, int yy, int id) : direction(dir), x(xx), y(yy), move_id(id){};
 string moved::s_str() {
     return to_string(move_id)+"|"+(direction?"r":"l")+"|"+ to_string(x)+"|"+to_string(y)+";";
@@ -59,14 +71,14 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
     int d=k%length;
     w_i=length;
     h_i=k/length+(d>0 ? 1 : 0);
-    std::cout << "DEBUG: k=" << k << " length=" << length << " word=" << word << std::endl;
-    word.resize(k+(d>0 ? length-d:0), ' ');
+    //std::cout << "DEBUG: k=" << k << " length=" << length << " word=" << word << std::endl;
+    word.resize(word.length()+(d>0 ? length-d:0), ' ');
     float h,w;
     w=100.0f/2.0f;
-    h=100.0f*5.0f/9.0f;
+    h=100.0f*8.0f/9.0f;
     float t_s=0.4;
-    float w_a=(w-(w_i+w_i-1)*2*t_s)/(w_i+(w_i-1)/3);
-    float h_a=(h-(h_i+h_i-1)*2*t_s)/(h_i+(h_i-1)/3);
+    float w_a=(w-(w_i+w_i-1)*2*t_s)/(w_i+(w_i-1)/3.0f);
+    float h_a=(h-(h_i+h_i-1)*2*t_s)/(h_i+(h_i-1)/3.0f);
     tablica.assign(h_i, vector<AtomData>(w_i, {0,nullptr}));
     przyciski.assign((h_i-1)*2, vector<AtomData>(w_i-1, {0,nullptr}));
     int f=0;
@@ -143,12 +155,12 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                                                                                                                                                                                                                                                      f_HTML("#000000")},"ö:D");
                 przyciski[2*g+1][f]=poprzedni;
             }else{
-                Strona_glowna->addButton(*Baza,*(przyciski[0][0].pointer),"ä", floatToString(((100.0f-w)/2+w_a+w_a/6.0f+2.0f*t_s)+((float)f)*(w_a+w_a/3.0f+4.0f*t_s))+"vw", floatToString(((100.0f-h)/2.0f+h_a+h_a/6.0f+3.0f*t_s)+g*(h_a+h_a/3.0f+4.0f*t_s))+"vh");
+                Strona_glowna->addButton(*Baza,*(przyciski[0][0].pointer),"ä", floatToString(((100.0f-w)/2+w_a+w_a/6.0f+3.0f*t_s)+((float)f)*(w_a+w_a/3.0f+4.0f*t_s))+"vw", floatToString(((100.0f-h)/2.0f+h_a+h_a/6.0f+3.0f*t_s)+g*(h_a+h_a/3.0f+4.0f*t_s))+"vh");
                 przyciski[2*g][f]=poprzedni;
-                Strona_glowna->addButton(*Baza,*(przyciski[1][0].pointer),"ö", floatToString(((100.0f-w)/2+w_a+w_a/6.0f+2.0f*t_s+0.4)+((float)f)*(w_a+w_a/3.0f+4.0f*t_s))+"vw", floatToString(((100.0f-h)/2.0f+h_a+h_a/6.0f+3.0f*t_s+0.4)+g*(h_a+h_a/3.0f+4.0f*t_s))+"vh");
+                Strona_glowna->addButton(*Baza,*(przyciski[1][0].pointer),"ö", floatToString(((100.0f-w)/2+w_a+w_a/6.0f+3.0f*t_s+0.4)+((float)f)*(w_a+w_a/3.0f+4.0f*t_s))+"vw", floatToString(((100.0f-h)/2.0f+h_a+h_a/6.0f+3.0f*t_s+0.4)+g*(h_a+h_a/3.0f+4.0f*t_s))+"vh");
                 przyciski[2*g+1][f]=poprzedni;
             }
-            przyciski[2*g][f].pointer->checkevent=[Strona_glowna,this,g,f]{
+            przyciski[2*g][f].pointer->checkevent=[Strona_glowna,Baza,this,g,f]{
                 string t1,t2,t3,t4;
                 t1=this->tablica[g][f].pointer->name;
                 t2=this->tablica[g][f+1].pointer->name;
@@ -164,8 +176,13 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 Strona_glowna->addActive(this->tablica[g+1][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g+1][f].id);
+                if(!no_validate){
+                    if (this->validate()){
+                        Pagedefault(Baza,Strona_glowna,this);
+                    }
+                }
             };
-            przyciski[2*g+1][f].pointer->checkevent=[Strona_glowna, this,g,f]{
+            przyciski[2*g+1][f].pointer->checkevent=[Strona_glowna,Baza, this,g,f]{
                 string t1,t2,t3,t4;
                 t1=this->tablica[g][f].pointer->name;
                 t2=this->tablica[g][f+1].pointer->name;
@@ -181,6 +198,11 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 Strona_glowna->addActive(this->tablica[g+1][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g+1][f].id);
+                if(!no_validate){
+                    if (this->validate()){
+                        Pagedefault(Baza,Strona_glowna,this);
+                    }
+                }
             };
 
         }
@@ -207,7 +229,7 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                                                                       "font-name:./fonts/orbitron-black.ttf",
                                                                       "font:#FEBD27FF",
                                                                       "font-shadow:#00000050",
-                                                                      (timer ? "time-format:mm;ss": "time-format:hh;mm;ss"),
+                                                                      (timer ? "time-format:hh;mm;ss": "time-format:hh;mm;ss"),
                                                                       (timer ? "crementation:-" : "crementation:+"),
                                                                       (timer ? "real-time:-":"real-time:+")},vector<string>{"width:120px",
                                                                                                     "min-width:10vw",
@@ -225,10 +247,65 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
     Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
     add_time_event=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
     if(timer){
-        add_event=[Strona_glowna,Baza, this]{ Pagedefault(Baza,Strona_glowna, this);};
+        add_event=[Strona_glowna,Baza, this]{ Pagedefault(Baza,Strona_glowna, this); };
     }
-
-
+    Strona_glowna->addElement<Atom>(*Baza,"Złoto",
+                                      vector<string>{"position-x:12.5vw",
+                                                     "position-y:20vh",
+                                                     "font-size:7.5vh",
+                                                     "font-maxwidth:9vw",
+                                                     "font-name:./fonts/orbitron-black.ttf",
+                                                     "font:#FEBD27FF",
+                                                     "font-shadow:#00000050"},vector<string>{"width:18vw",
+                                                                                             "min-width:18vw",
+                                                                                             "max-width:18vw",
+                                                                                             "height:15vh",
+                                                                                             "min-height:15vh",
+                                                                                             "max-height:15vh",
+                                                                                             "border-radius:2px",
+                                                                                             "border-thickness:0.5vw",
+                                                                                             "shadow-offset-x:2px",
+                                                                                             "shadow-offset-y:2px"},
+                                      vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                            f_HTML("#000000"),
+                                                            f_HTML("#FEF177"),
+                                                            f_HTML("#F25420"),
+                                                            f_HTML("#000000")},actual_word);
+    Strona_glowna->addElement<Button>(*Baza,"Czerń",
+                                    vector<string>{"position-x:12.5vw",
+                                                   "position-y:80vh",
+                                                   "font-size:7.5vh",
+                                                   "font-maxwidth:9vw",
+                                                   "font-name:./fonts/orbitron-black.ttf",
+                                                   "font:#FEBD27FF",
+                                                   "font-shadow:#00000050"},vector<string>{"width:18vw",
+                                                                                           "min-width:18vw",
+                                                                                           "max-width:18vw",
+                                                                                           "height:15vh",
+                                                                                           "min-height:15vh",
+                                                                                           "max-height:15vh",
+                                                                                           "border-radius:2px",
+                                                                                           "border-thickness:0.5vw",
+                                                                                           "shadow-offset-x:2px",
+                                                                                           "shadow-offset-y:2px"},
+                                    vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                          f_HTML("#000000"),
+                                                          f_HTML("#FEF177"),
+                                                          f_HTML("#F25420"),
+                                                          f_HTML("#000000")},"Powrót");
+    add_event=[Strona_glowna,Baza, this]{ Pagedefault(Baza,Strona_glowna, this); };
+}
+bool Game::validate() {
+    string check_word="";
+    for(int g=0;g<h_i;g++){
+        for(int f=0;f<w_i;f++){
+            check_word+=tablica[g][f].pointer->name;
+        }
+    }
+    if (check_word==actual_word){
+        return true;
+    }
+    return false;
 }
 void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra){//Fun,kcja rysująca menu główne
     Strona_glowna->makeEmpty();
@@ -469,7 +546,7 @@ void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra) {
 }
 void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
     Strona_glowna->makeEmpty();
-    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:42.5vw",
+    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:33.5vw",
                                                                         "position-y:20vh",
                                                                         "font-size:7vh",
                                                                         "font-name:./fonts/orbitron-black.ttf",
@@ -480,8 +557,8 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
                                                                         "height:10vh","min-height:10vh","max-height:10vh",
                                                                         "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
                                                                         vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Podaj słowo:");
-    Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:50vw",
-                                                                          "position-y:32vh",
+    Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:61vw",
+                                                                          "position-y:20vh",
                                                                           "font-size:5vh",
                                                                           "font-name:./fonts/orbitron-black.ttf",
                                                                           "font:#7a2160",
@@ -498,8 +575,14 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
                                                                                                   f_HTML("#F25420"),f_HTML("#000000"),
                                                                                                   f_HTML("#beff56")}, "Wpisz słowo");
     add_last_textfield(Strona_glowna);
-    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj liczbę liter w wierszu","42.5vw", "44vh");
-    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz liczbę","50vw", "56vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj liczbę liter w wierszu","33.5vw", "32vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"4","61vw", "32vh");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj liczbę losowych przesunięć","33.5vw", "44vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"5","61vw", "44vh");
+    add_last_textfield(Strona_glowna);
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj czas (puste pole oznacza brak limitu):","33.5vw", "56vh");
+    Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"00:05:00","61vw", "56vh");
     add_last_textfield(Strona_glowna);
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
     vector<string>{"position-x:40vw",
@@ -521,6 +604,10 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
                                                                          f_HTML("#beff56")},"Powrót");
     add_event=[Strona_glowna,Baza,Gra]{ Pagedefault(Baza,Strona_glowna, Gra);};
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Start","60vw","68vh");
-    add_event=[Strona_glowna,Baza,Gra]{Gra->Start(Strona_glowna,Baza, Strona_glowna->buttons[Strona_glowna->getKlucz()-5]->name,"", stoi(Strona_glowna->buttons[Strona_glowna->getKlucz()-3]->name), 0,false, "00;00;00");};
+    add_event=[Strona_glowna,Baza,Gra]{
+
+        Gra->Start(Strona_glowna,Baza, ostatni_przycisk(8)->name,"", stoi(ostatni_przycisk(6)->name), stoi(
+                ostatni_przycisk(4)->name),(ostatni_przycisk(2)->name.empty() ? false : true), (ostatni_przycisk(2)->name.empty()? "00;00;00" : replaceAll(ostatni_przycisk(2)->name,":",";")));
+    };
     
 }

@@ -147,7 +147,7 @@ int main()
             redraw = false;
         }
     }
-
+    delete Gra;
     delete Strona_glowna;
     delete Baza;
     al_destroy_event_queue(queue);

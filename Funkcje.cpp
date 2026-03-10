@@ -771,7 +771,7 @@ void Timer::thic(){
             }
             timer+=(int)k;
             name=zfill(hours,2)+":"+ zfill(minutes,2)+":"+zfill(seconds,2);
-            if (hours==0 && minutes==0 && seconds<0){take_event();}
+            if (hours==0 && minutes==0 && seconds==0){take_time_event();take_event();}
             else take_time_event();
         }
     }
