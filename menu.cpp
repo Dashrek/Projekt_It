@@ -34,7 +34,7 @@ std::string floatToString(float value, int precision = 1) {
     out << std::fixed << std::setprecision(precision) << value;
     return out.str();
 }
-Game::Game() : h_i(0), w_i(0), actual_word(""),no_validate(false){
+Game::Game() : h_i(0), w_i(0), actual_word(""),no_validate(false),move_count(0){
 }
 Game::~Game(){
     if(h_i>=2) {
@@ -46,6 +46,7 @@ Game::~Game(){
         }
         tablica.clear();
         przyciski.clear();
+        moves.clear();
     }
 }
 void Game::flush(){
@@ -58,15 +59,18 @@ void Game::flush(){
         }
         tablica.clear();
         przyciski.clear();
+        moves.clear();
     }
     h_i=0;
     w_i=0;
     actual_word="";
     no_validate=false;
+    move_count=0;
 
 }
 void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to_word, int length, int steps,bool timer, string timek){
     Strona_glowna->makeEmpty();
+    move_count=0;
     int k= utf8_len(word);//długość słowa
     int d=k%length;
     w_i=length;
@@ -177,7 +181,11 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 Strona_glowna->addActive(this->przyciski[2*g][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g+1][f].id);
                 if(!no_validate){
+                    this->moves.push_back(moved(true,f,g,this->move_count++));
                     if (this->validate()){
+                        for (int ii=0;ii<this->move_count;ii++) {
+                            cout << moves[ii].s_str() << "\n";
+                        }
                         Pagedefault(Baza,Strona_glowna,this);
                     }
                 }
@@ -198,7 +206,9 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 Strona_glowna->addActive(this->tablica[g+1][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g][f].id);
                 Strona_glowna->addActive(this->przyciski[2*g+1][f].id);
+
                 if(!no_validate){
+                    this->moves.push_back(moved(true,f,g,this->move_count++));
                     if (this->validate()){
                         Pagedefault(Baza,Strona_glowna,this);
                     }

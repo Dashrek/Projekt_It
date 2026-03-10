@@ -20,7 +20,7 @@ class Game {
     vector<vector<AtomData>> przyciski;
     vector<vector<AtomData>> tablica;
     vector<moved>moves;
-    int w_i,h_i;
+    int w_i,h_i,move_count;
     bool no_validate;
     string actual_word;
 public:

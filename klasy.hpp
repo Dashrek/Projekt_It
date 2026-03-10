@@ -9,7 +9,7 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 #include <functional>
 #include <thread>
