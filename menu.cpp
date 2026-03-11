@@ -70,6 +70,7 @@ void Game::flush(){
 }
 void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to_word, int length, int steps,bool timer, string timek){
     Strona_glowna->makeEmpty();
+    flush();
     move_count=0;
     int k= utf8_len(word);//długość słowa
     int d=k%length;
@@ -183,9 +184,6 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 if(!no_validate){
                     this->moves.push_back(moved(true,f,g,this->move_count++));
                     if (this->validate()){
-                        for (int ii=0;ii<this->move_count;ii++) {
-                            cout << moves[ii].s_str() << "\n";
-                        }
                         Pagedefault(Baza,Strona_glowna,this);
                     }
                 }
