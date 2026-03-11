@@ -621,3 +621,92 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
     };
     
 }
+//Sekcja sieciowa- odtąd wszystkie rzeczy będą dotyczyć funkcji sieciowych
+bool Client::connectToServer(const std::string& ip, int port) {
+    // 1. Inicjalizacja biblioteki sieciowej dla Windows
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        return false;
+    }
+#endif
+
+    // 2. Tworzenie gniazda (Socket)
+    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (clientSocket == INVALID_SOCKET) {
+#ifdef _WIN32
+        WSACleanup();
+#endif
+        return false;
+    }
+    // 3. Konfiguracja adresu serwera
+    sockaddr_in serverAddr{};
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+
+    // Konwersja IP tekstowego na format binarny
+#ifdef _WIN32
+    serverAddr.sin_addr.s_addr = inet_addr(ip.c_str());
+#else
+    if (inet_pton(AF_INET, ip.c_str(), &serverAddr.sin_addr) <= 0) {
+        return false;
+    }
+#endif
+
+    // 4. Nawiązywanie połączenia z serwerem Python
+    if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        disconnect(); // Czyści gniazdo w razie błędu
+        return false;
+    }
+
+    // 5. Uruchomienie asynchronicznego wątku odbierania danych
+    connected = true;
+    receiveThread = std::thread(&Client::receiveLoop, this);
+
+    return true;
+}
+void Client::disconnect() {
+    connected = false;
+    if (clientSocket != INVALID_SOCKET) {
+#ifdef _WIN32
+        closesocket(clientSocket);
+        WSACleanup();
+#else
+        close(clientSocket);
+#endif
+        clientSocket = INVALID_SOCKET;
+    }
+    if (receiveThread.joinable()) {
+        receiveThread.join(); // Czekaj na zakończenie wątku tła
+    }
+}
+Client::~Client() {
+    // Wywołujemy metodę disconnect, aby zwolnić zasoby i zamknąć wątki
+    disconnect();
+}
+void Client::receiveLoop() {
+    // Deklaracja tablicy (bufora) na 1024 bajty
+    char buffer[1024];
+    std::string dataAccumulator;
+
+    while (connected) {
+        // recv oczekuje wskaźnika na początek tablicy (buffer)
+        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+
+        if (bytesReceived > 0) {
+            buffer[bytesReceived] = '\0'; // Zakończenie odebranego ciągu
+            dataAccumulator += buffer;
+
+            size_t pos;
+            while ((pos = dataAccumulator.find('\n')) != std::string::npos) {
+                std::string message = dataAccumulator.substr(0, pos);
+                dataAccumulator.erase(0, pos + 1);
+
+                std::lock_guard<std::mutex> lock(queueMutex);
+                responseQueue.push(message);
+            }
+        } else {
+            connected = false;
+        }
+    }
+}

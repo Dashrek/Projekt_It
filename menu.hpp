@@ -31,6 +31,35 @@ public:
     bool validate();
 
 };
+
+
+class Client {
+private:
+    SocketType clientSocket = INVALID_SOCKET;
+    std::atomic<bool> connected{false};
+    std::thread receiveThread;
+    std::mutex queueMutex;
+    std::queue<std::string> responseQueue;
+
+    void receiveLoop(); // Wątek tła do odbierania danych
+
+public:
+    Client();
+    ~Client();
+
+    bool connectToServer(const std::string& ip, int port);
+    void disconnect();
+
+    // Metody komunikacyjne
+    void sendRequest(const std::string& message);
+    void requestLogin(const std::string& login, const std::string& pass);
+    void sendSolution(const std::vector<std::string>& moves);
+
+    // Zarządzanie odpowiedziami w pętli gry
+    bool hasResponses();
+    std::string getNextResponse();
+};
+
 size_t utf8_len(const std::string& s);
 void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra);
 void PageNewGameSolo(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra);

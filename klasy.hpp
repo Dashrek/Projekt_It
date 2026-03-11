@@ -10,6 +10,8 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
 #include <cmath>
+#include <queue>
+#include <atomic>
 #include <cstdlib>
 #include <functional>
 #include <thread>
@@ -19,8 +21,20 @@
 #include <sstream>
 #include <cstdio>
 #include <mutex>
+
 #ifdef _WIN32
-#include <windows.h>
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #pragma comment(lib, "ws2_32.lib")
+    typedef SOCKET SocketType;
+#else
+    #include <sys/socket.h>
+    #include <arpa/inet.h>
+    #include <unistd.h>
+typedef int SocketType;
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
 #endif
 using namespace std;
 // Struktura przechowująca styl i wymiary (obsługuje px, vh, vw)
