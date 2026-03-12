@@ -915,7 +915,7 @@ void Page::findButtonActive(int x, int y, bool a) {
                     buttons[aktywny_przycisk]->pressed();
                     aktywne.emplace_back(aktywny_przycisk);}
                 else if (buttons[aktywny_przycisk]->checker()==Active && !a){
-                    cout<<buttons[aktywny_przycisk]->name<<"\n";
+                    //cout<<buttons[aktywny_przycisk]->name<<"\n";
                     buttons[aktywny_przycisk]->take_event();
                 }
         }

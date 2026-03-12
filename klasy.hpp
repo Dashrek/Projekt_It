@@ -21,10 +21,9 @@
 #include <sstream>
 #include <cstdio>
 #include <mutex>
-
 #ifdef _WIN32
-    #include <windows.h>
     #include <winsock2.h>
+    #include <windows.h>
     #include <ws2tcpip.h>
     #pragma comment(lib, "ws2_32.lib")
     typedef SOCKET SocketType;

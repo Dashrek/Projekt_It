@@ -10,7 +10,7 @@ ALLEGRO=`pkg-config --cflags --libs allegro-5 allegro_ttf-5 allegro_primitives-5
 all: clean main
 
 main:
-	$(CC) $(CFLAGS) $(SRCS) $(ALLEGRO)
+	$(CC) $(CFLAGS) $(SRCS) $(ALLEGRO) -lws2_32
 
 clean:
 	rm -rf *.o $(APPNAME)
