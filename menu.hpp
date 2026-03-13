@@ -1,5 +1,6 @@
 #include "klasy.hpp"
 #include <format>
+#include <fstream>
 class moved {
 
     int move_id;//numer ruchu
@@ -15,6 +16,35 @@ struct AtomData {
     int id;
     Atom* pointer;
 };
+class Client {
+private:
+    SocketType clientSocket = INVALID_SOCKET;
+    std::atomic<bool> connected{false};
+    std::thread receiveThread;
+    std::mutex queueMutex;
+    std::queue<std::string> responseQueue;
+    string ranking;
+    int userId=0;
+    // Wątek tła do odbierania danych
+
+public:
+    int get_Id();
+    void set_Id(int id);
+    Client()=default;
+    ~Client();
+    void receiveLoop();
+    bool connectToServer(const string& ip, int port);
+    void disconnect();
+    void logout();
+    // Metody komunikacyjne
+    void sendRequest(const string& message);
+    void requestLogin(const string& login, const string& pass);
+    void sendSolution(vector<moved> moves, int mover);
+
+    // Zarządzanie odpowiedziami w pętli gry
+    bool hasResponses();
+    std::string getNextResponse();
+};
 class Game {
 
     vector<vector<AtomData>> przyciski;
@@ -26,43 +56,22 @@ class Game {
 public:
     Game();
     ~Game();
-    void Start(Page* Strona_glowna, ButtonFactory *Baza, string word, string to_word, int length, int steps, bool timer, string time);
+    void Start(Page* Strona_glowna, ButtonFactory *Baza, string word, string to_word, int length, int steps, bool timer, string time, bool clientStatus, Client * client);
     void flush();
     bool validate();
 
 };
 
 
-class Client {
-private:
-    SocketType clientSocket = INVALID_SOCKET;
-    std::atomic<bool> connected{false};
-    std::thread receiveThread;
-    std::mutex queueMutex;
-    std::queue<std::string> responseQueue;
 
-    void receiveLoop(); // Wątek tła do odbierania danych
-
-public:
-    Client();
-    ~Client();
-
-    bool connectToServer(const std::string& ip, int port);
-    void disconnect();
-
-    // Metody komunikacyjne
-    void sendRequest(const std::string& message);
-    void requestLogin(const std::string& login, const std::string& pass);
-    void sendSolution(const std::vector<std::string>& moves);
-
-    // Zarządzanie odpowiedziami w pętli gry
-    bool hasResponses();
-    std::string getNextResponse();
-};
-
+void update(Client * client,Page * Strona_glowna, ButtonFactory * Baza, Game *Gra);
+std::map<std::string, std::string> loadConfig(const std::string& filename);
 size_t utf8_len(const std::string& s);
-void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra);
-void PageNewGameSolo(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra);
+void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra, Client * client);
+void wygaszacz(string Name,ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client);
+void wygaszacz1(string Name,ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client);
+void PageNewGameSolo(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra,Client *client);
 void add_last_textfield(Page * Strona_glowna);
-void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game * Gra);
-void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra);
+void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game * Gra,Client *client);
+void wyrejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game * Gra,Client *client);
+void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra, Client *client);

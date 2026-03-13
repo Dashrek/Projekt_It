@@ -68,7 +68,7 @@ void Game::flush(){
     move_count=0;
 
 }
-void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to_word, int length, int steps,bool timer, string timek){
+void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to_word, int length, int steps,bool timer, string timek,bool clientStatus, Client * client){
     Strona_glowna->makeEmpty();
     flush();
     move_count=0;
@@ -165,7 +165,7 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 Strona_glowna->addButton(*Baza,*(przyciski[1][0].pointer),"ö", floatToString(((100.0f-w)/2+w_a+w_a/6.0f+3.0f*t_s+0.4)+((float)f)*(w_a+w_a/3.0f+4.0f*t_s))+"vw", floatToString(((100.0f-h)/2.0f+h_a+h_a/6.0f+3.0f*t_s+0.4)+g*(h_a+h_a/3.0f+4.0f*t_s))+"vh");
                 przyciski[2*g+1][f]=poprzedni;
             }
-            przyciski[2*g][f].pointer->checkevent=[Strona_glowna,Baza,this,g,f]{
+            przyciski[2*g][f].pointer->checkevent=[Strona_glowna,Baza,this,g,f,clientStatus,client]{
                 string t1,t2,t3,t4;
                 t1=this->tablica[g][f].pointer->name;
                 t2=this->tablica[g][f+1].pointer->name;
@@ -184,11 +184,17 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 if(!no_validate){
                     this->moves.push_back(moved(true,f,g,this->move_count++));
                     if (this->validate()){
-                        Pagedefault(Baza,Strona_glowna,this);
+                        if(!clientStatus){
+                            wygaszacz1("Ułożyłeś słowo: "+this->actual_word, Baza, Strona_glowna,this,client);
+                        }
+                        else{
+                            client->sendSolution(this->moves,this->move_count);
+                            wygaszacz("Ułożyłeś słowo rankingowe: "+this->actual_word+ " Trwa aktualizacja.", Baza, Strona_glowna,this,client);
+                        }
                     }
                 }
             };
-            przyciski[2*g+1][f].pointer->checkevent=[Strona_glowna,Baza, this,g,f]{
+            przyciski[2*g+1][f].pointer->checkevent=[Strona_glowna,Baza, this,g,f,clientStatus,client]{
                 string t1,t2,t3,t4;
                 t1=this->tablica[g][f].pointer->name;
                 t2=this->tablica[g][f+1].pointer->name;
@@ -208,7 +214,13 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                 if(!no_validate){
                     this->moves.push_back(moved(true,f,g,this->move_count++));
                     if (this->validate()){
-                        Pagedefault(Baza,Strona_glowna,this);
+                        if(!clientStatus){
+                            wygaszacz1("Ułożyłeś słowo: "+this->actual_word, Baza, Strona_glowna,this,client);
+                        }
+                        else{
+                            client->sendSolution(this->moves,this->move_count);
+                            wygaszacz("Ułożyłeś słowo rankingowe: "+this->actual_word+ " Trwa aktualizacja.", Baza, Strona_glowna,this,client);
+                        }
                     }
                 }
             };
@@ -255,7 +267,7 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
     Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
     add_time_event=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
     if(timer){
-        add_event=[Strona_glowna,Baza, this]{ Pagedefault(Baza,Strona_glowna, this); };
+        add_event=[Strona_glowna,Baza, this, client]{ wygaszacz1("Nie udało ci się ułożyć słowa: "+this->actual_word,Baza,Strona_glowna,this,client); };
     }
     Strona_glowna->addElement<Atom>(*Baza,"Złoto",
                                       vector<string>{"position-x:12.5vw",
@@ -301,7 +313,7 @@ void Game::Start(Page* Strona_glowna, ButtonFactory *Baza, string word,string to
                                                           f_HTML("#FEF177"),
                                                           f_HTML("#F25420"),
                                                           f_HTML("#000000")},"Powrót");
-    add_event=[Strona_glowna,Baza, this]{ Pagedefault(Baza,Strona_glowna, this); };
+    add_event=[Strona_glowna,Baza, this,client]{ Pagedefault(Baza,Strona_glowna, this, client); };
 }
 bool Game::validate() {
     string check_word="";
@@ -315,7 +327,7 @@ bool Game::validate() {
     }
     return false;
 }
-void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra){//Fun,kcja rysująca menu główne
+void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra, Client * client){//Fun,kcja rysująca menu główne
     Strona_glowna->makeEmpty();
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
                              vector<string>{"position-x:50vw",
@@ -340,13 +352,19 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra){//Fun,k
                               f_HTML("#F25420"),
                               f_HTML("#000000")},"Nowa gra Solo");//Przycisk nowej gry solo
 
-    add_event=[page=Strona_glowna,factory=Baza, Gra]{
-        PageNewGameSolo(factory,page, Gra);
+    add_event=[page=Strona_glowna,factory=Baza, Gra,client]{
+        PageNewGameSolo(factory,page, Gra,client);
     };
     //Przycisk nowej gry online
     Strona_glowna->addButton(*Baza,Inny,"Nowa Gra Online","50vw", "50vh");
     //Przycisk Nowej Gry Rankingowej
     Strona_glowna->addButton(*Baza,Inny,"Gra Rankingowa","50vw", "80vh");
+    add_event=[Baza, Strona_glowna, Gra,client] {
+        if (client->get_Id() != 0){
+            client->sendRequest("GET_TASK;" + to_string(client->get_Id()) + "\n");
+            wygaszacz("Oczekiwanie na grę...", Baza, Strona_glowna,Gra, client);
+        }
+    };
     //Przycisk do zalogowania na nowe konto
     Strona_glowna->addElement<TriangleButton>(*Baza,"Srebro",vector<string>{"position-x:16vw",
                                                                             "position-y:16vh",
@@ -368,9 +386,14 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra){//Fun,k
                                                                     f_HTML("#000000"),
                                                                     f_HTML("#FEF177"),
                                                                     f_HTML("#F25420"),
-                                                                    f_HTML("#000000")},"Zaloguj:U");
-    add_event=[page=Strona_glowna,factory=Baza, Gra] {
-        PageZaloguj(factory,page, Gra);
+                                                                    f_HTML("#000000")},(client->get_Id()==0 ? "Zaloguj:U" : "Wyloguj:U"));
+    add_event=[page=Strona_glowna,factory=Baza, Gra,client] {
+        if(client->get_Id()==0) {
+            PageZaloguj(factory, page, Gra,client);
+        }else{
+            client->logout();
+            wygaszacz("Trwa wylogowywanie...",factory,page,Gra,client);
+        }
     };
 
     //Przycisk do zarejestrowania konta
@@ -395,9 +418,14 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra){//Fun,k
                                                                     f_HTML("#000000"),
                                                                     f_HTML("#FEF177"),
                                                                     f_HTML("#F25420"),
-                                                                    f_HTML("#000000")},"Zarejestruj:D");
-    add_event=[page=Strona_glowna,factory=Baza, Gra]{
-        zarejestruj(factory,page, Gra);
+                                                                    f_HTML("#000000")},(client->get_Id()==0 ? "Zarejestruj:D": "Usuń konto:D"));
+    add_event=[page=Strona_glowna,factory=Baza, Gra, client]{
+        if (client->get_Id()==0) {
+            zarejestruj(factory, page, Gra,client);
+        }else{
+            wyrejestruj(factory,page,Gra,client);
+        }
+
     };
     //Timer
     Strona_glowna->addElement<Timer>(*Baza,"Molibden", vector<string>{"position-x:90vw",
@@ -434,8 +462,140 @@ void add_last_textfield(Page * Strona_glowna){
         (Strona_glowna->buttons[ten]->checker()==Clicked ? Strona_glowna->addTK(ten):Strona_glowna->addTK(0));
     };
 }
-void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra) {
+void wygaszacz(string Name,ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client){
     Strona_glowna->makeEmpty();
+    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:50vw",
+                                                                    "position-y:50vh",
+                                                                    "font-size:8vh",
+                                                                    "font-name:./fonts/orbitron-black.ttf",
+                                                                    "font:#7a2160",
+                                                                    "font-shadow:#290b20",
+                                                                    "font-maxwidth:50vw"},
+                                    vector<string>{"width:52vw","min-width:52vw","max-width:52vw",
+                                                   "height:12vh","min-height:12vh","max-height:12vh",
+                                                   "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                    vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, Name);
+}
+void wygaszacz1(string Name,ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client){
+    Strona_glowna->makeEmpty();
+    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:50vw",
+                                                                    "position-y:50vh",
+                                                                    "font-size:8vh",
+                                                                    "font-name:./fonts/orbitron-black.ttf",
+                                                                    "font:#7a2160",
+                                                                    "font-shadow:#290b20",
+                                                                    "font-maxwidth:50vw"},
+                                    vector<string>{"width:52vw","min-width:52vw","max-width:52vw",
+                                                   "height:12vh","min-height:12vh","max-height:12vh",
+                                                   "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                    vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, Name);
+    Strona_glowna->addElement<Timer>(*Baza,"Molibden", vector<string>{"position-x:90vw",
+                                                                      "position-y:10vh",
+                                                                      "font-size:2.5vw",
+                                                                      "font-maxwidth:170px",
+                                                                      "font-minwidth:8vw",
+                                                                      "font-name:./fonts/orbitron-black.ttf",
+                                                                      "font:#FEBD27FF",
+                                                                      "font-shadow:#00000050",
+                                                                      "time-format:hh;mm;ss",
+                                                                      "crementation:-",
+                                                                      "real-time:-"},vector<string>{"width:120px",
+                                                                                                                            "min-width:10vw",
+                                                                                                                            "max-width:192px",
+                                                                                                                            "height:10vh",
+                                                                                                                            "min-height:20px",
+                                                                                                                            "max-height:108px",
+                                                                                                                            "border-radius:2px",
+                                                                                                                            "border-thickness:0.5vw",
+                                                                                                                            "shadow-offset-x:2px",
+                                                                                                                            "shadow-offset-y:2px"},vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                                                                                                                                         f_HTML("#000000"),
+                                                                                                                                                                         f_HTML("#FEF177"),
+                                                                                                                                                                         f_HTML("#F25420"),f_HTML("#000000")}, "00:00:10");
+    Strona_glowna->addCycle(Strona_glowna->getKlucz()-1);
+    add_time_event=[Strona_glowna, ten=Strona_glowna->getKlucz()-1]{Strona_glowna->addActive(ten);};
+    add_event=[Strona_glowna,Baza, Gra, client]{ Pagedefault(Baza,Strona_glowna, Gra, client); };
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
+                                      vector<string>{"position-x:50vw",
+                                                     "position-y:80vh",
+                                                     "font-size:5vh",
+                                                     "font-name:./fonts/orbitron-black.ttf",
+                                                     "font:#7a2160",
+                                                     "font-shadow:#290b20",
+                                                     "font-maxwidth:16vw",
+                                                     "Background-color:#f0f0f0",
+                                                     "Frame-color:#101010"
+                                      },vector<string>{"width:17.5vw","min-width:17.5vw","max-width:17.5vw",
+                                                       "height:10vh","min-height:10vh","max-height:10vh",
+                                                       "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                      vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                            f_HTML("#000000"),
+                                                            f_HTML("#FEF177"),
+                                                            f_HTML("#F25420"),f_HTML("#000000"),
+                                                            f_HTML("#beff56")},"Powrót");
+    add_event=[Strona_glowna,Baza,Gra, client]{
+        Pagedefault(Baza,Strona_glowna, Gra,client);
+    };
+
+}
+void wyrejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client){
+    Strona_glowna->makeEmpty();
+    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:50vw",
+                                                                    "position-y:20vh",
+                                                                    "font-size:5vh",
+                                                                    "font-name:./fonts/orbitron-black.ttf",
+                                                                    "font:#7a2160",
+                                                                    "font-shadow:#290b20",
+                                                                    "font-maxwidth:30vw"},
+                                    vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                   "height:10vh","min-height:10vh","max-height:10vh",
+                                                   "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                    vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Aby usunąć konto podaj:");
+    Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:50vw",
+                                                                           "position-y:32vh",
+                                                                           "font-size:5vh",
+                                                                           "font-name:./fonts/orbitron-black.ttf",
+                                                                           "font:#7a2160",
+                                                                           "font-shadow:#290b20",
+                                                                           "font-maxwidth:30vw",
+                                                                           "Background-color:#f0f0f0",
+                                                                           "Frame-color:#101010"
+                                         },vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                          "height:10vh","min-height:10vh","max-height:10vh",
+                                                          "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                         vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                               f_HTML("#000000"),
+                                                               f_HTML("#FEF177"),
+                                                               f_HTML("#F25420"),f_HTML("#000000"),
+                                                               f_HTML("#beff56")}, "hasło!");
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
+                                      vector<string>{"position-x:40vw",
+                                                     "position-y:80vh",
+                                                     "font-size:5vh",
+                                                     "font-name:./fonts/orbitron-black.ttf",
+                                                     "font:#7a2160",
+                                                     "font-shadow:#290b20",
+                                                     "font-maxwidth:16vw",
+                                                     "Background-color:#f0f0f0",
+                                                     "Frame-color:#101010"
+                                      },vector<string>{"width:17.5vw","min-width:17.5vw","max-width:17.5vw",
+                                                       "height:10vh","min-height:10vh","max-height:10vh",
+                                                       "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                      vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                            f_HTML("#000000"),
+                                                            f_HTML("#FEF177"),
+                                                            f_HTML("#F25420"),f_HTML("#000000"),
+                                                            f_HTML("#beff56")},"Powrót");
+    add_event=[Strona_glowna,Baza,Gra,client]{ Pagedefault(Baza,Strona_glowna,Gra,client);};
+    Strona_glowna->addButton(*Baza,Inny,"Wyrejestruj.","60vw","80vh");
+    add_event=[Strona_glowna,Baza,Gra,client]{
+        client->sendRequest("REGISTER_OUT;"+to_string(client->get_Id())+";"+ ostatni_przycisk(2)->name+"\n");
+        wygaszacz("Oczekiwanie na usunięcie konta",Baza,Strona_glowna,Gra,client);
+    };
+}
+void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client) {
+    Strona_glowna->makeEmpty();
+    //10
     Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:33.5vw",
                                                                         "position-y:20vh",
                                                                         "font-size:7vh",
@@ -447,6 +607,7 @@ void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra) {
                                                                         "height:10vh","min-height:10vh","max-height:10vh",
                                                                         "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
                                                                         vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Podaj nick:");
+    //10
     Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:61vw",
                                                                           "position-y:20vh",
                                                                           "font-size:5vh",
@@ -465,18 +626,27 @@ void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra) {
                                                                                                   f_HTML("#F25420"),f_HTML("#000000"),
                                                                                                   f_HTML("#beff56")}, "Wpisz nick");
     add_last_textfield(Strona_glowna);
+    //9
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj e-mail:","33.5vw", "32vh");
+    //8
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz e-mail","61vw", "32vh");
     add_last_textfield(Strona_glowna);
+    //7
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Powtórz e-mail:","33.5vw", "44vh");
+    //6
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz e-mail","61vw", "44vh");
     add_last_textfield(Strona_glowna);
+    //5
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj hasło:","33.5vw", "56vh");
+    //4
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz hasło","61vw", "56vh");
     add_last_textfield(Strona_glowna);
+    //3
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Powtórz hasło:","33.5vw", "68vh");
+    //2
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz hasło","61vw", "68vh");
     add_last_textfield(Strona_glowna);
+    //1
     Strona_glowna->addElement<Button>(*Baza,"Złoto",
 vector<string>{"position-x:40vw",
                                              "position-y:80vh",
@@ -495,11 +665,22 @@ vector<string>{"position-x:40vw",
                                                                      f_HTML("#FEF177"),
                                                                      f_HTML("#F25420"),f_HTML("#000000"),
                                                                      f_HTML("#beff56")},"Powrót");
-    add_event=[Strona_glowna,Baza,Gra]{ Pagedefault(Baza,Strona_glowna, Gra);};
+    add_event=[Strona_glowna,Baza,Gra, client]{
+        Pagedefault(Baza,Strona_glowna, Gra,client);
+    };
+    //0
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Zarejestruj.","60vw","80vh");
+    add_event=[Strona_glowna,Baza,Gra,client]{
+        if(ostatni_przycisk(2)->name== ostatni_przycisk(4)->name && ostatni_przycisk(6)->name== ostatni_przycisk(8)->name) {
+            client->sendRequest("REGISTER;" + ostatni_przycisk(10)->name+";"+ ostatni_przycisk(8)->name+";"+
+                                                                                                        ostatni_przycisk(4)->name+"\n");
+            wygaszacz("Oczekiwanie na utworzenie konta",Baza,Strona_glowna,Gra,client);
+        }
+    };
 }
-void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra) {
+void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra, Client * client) {
     Strona_glowna->makeEmpty();
+    //5
     Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:33.5vw",
                                                                         "position-y:20vh",
                                                                         "font-size:7vh",
@@ -511,6 +692,7 @@ void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra) {
                                                                         "height:10vh","min-height:10vh","max-height:10vh",
                                                                         "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
                                                                         vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Podaj nick:");
+    //4
     Strona_glowna->addElement<TextField>(*Baza,"TextField", vector<string>{"position-x:61vw",
                                                                           "position-y:20vh",
                                                                           "font-size:5vh",
@@ -529,9 +711,13 @@ void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra) {
                                                                                                   f_HTML("#F25420"),f_HTML("#000000"),
                                                                                                   f_HTML("#beff56")}, "Wpisz nick");
     add_last_textfield(Strona_glowna);
+    //3
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Podaj hasło:","33.5vw", "32vh");
+    //2
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-2],"Wpisz hasło","61vw", "32vh");
-    add_last_textfield(Strona_glowna);Strona_glowna->addElement<Button>(*Baza,"Złoto",
+    add_last_textfield(Strona_glowna);
+    //1
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
     vector<string>{"position-x:40vw",
                                                  "position-y:44vh",
                                                  "font-size:5vh",
@@ -549,10 +735,15 @@ void PageZaloguj(ButtonFactory *Baza, Page *Strona_glowna, Game *Gra) {
                                                                          f_HTML("#FEF177"),
                                                                          f_HTML("#F25420"),f_HTML("#000000"),
                                                                          f_HTML("#beff56")},"Powrót");
-    add_event=[Strona_glowna,Baza, Gra]{ Pagedefault(Baza,Strona_glowna, Gra);};
+    add_event=[Strona_glowna,Baza, Gra, client]{ Pagedefault(Baza,Strona_glowna, Gra,client);};
+    //0
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Zaloguj","60vw","44vh");
+    add_event=[Strona_glowna,Baza,Gra,client]{
+        client->sendRequest("LOGIN;"+ ostatni_przycisk(4)->name+";"+ ostatni_przycisk(2)->name+"\n");
+        wygaszacz("Oczekiwanie na zalogowanie...", Baza, Strona_glowna,Gra,client);
+    };
 }
-void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
+void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra, Client * client) {
     Strona_glowna->makeEmpty();
     Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:33.5vw",
                                                                         "position-y:20vh",
@@ -610,12 +801,12 @@ void PageNewGameSolo(ButtonFactory *Baza, Page *Strona_glowna, Game * Gra) {
                                                                          f_HTML("#FEF177"),
                                                                          f_HTML("#F25420"),f_HTML("#000000"),
                                                                          f_HTML("#beff56")},"Powrót");
-    add_event=[Strona_glowna,Baza,Gra]{ Pagedefault(Baza,Strona_glowna, Gra);};
+    add_event=[Strona_glowna,Baza,Gra,client]{ Pagedefault(Baza,Strona_glowna, Gra,client);};
     Strona_glowna->addButton(*Baza,*Strona_glowna->buttons[Strona_glowna->getKlucz()-1],"Start","60vw","68vh");
-    add_event=[Strona_glowna,Baza,Gra]{
+    add_event=[Strona_glowna,Baza,Gra,client]{
 
         Gra->Start(Strona_glowna,Baza, ostatni_przycisk(8)->name,"", stoi(ostatni_przycisk(6)->name), stoi(
-                ostatni_przycisk(4)->name),(ostatni_przycisk(2)->name.empty() ? false : true), (ostatni_przycisk(2)->name.empty()? "00;00;00" : replaceAll(ostatni_przycisk(2)->name,":",";")));
+                ostatni_przycisk(4)->name),(ostatni_przycisk(2)->name.empty() ? false : true), (ostatni_przycisk(2)->name.empty()? "00;00;00" : replaceAll(ostatni_przycisk(2)->name,":",";")),false,client);
     };
     
 }
@@ -663,8 +854,16 @@ bool Client::connectToServer(const std::string& ip, int port) {
 
     return true;
 }
+void Client::logout(){
+    lock_guard<mutex>lock(queueMutex);
+    userId=0;
+    ranking="";
+}
 void Client::disconnect() {
     connected = false;
+    userId=0;
+    ranking="";
+    sendRequest("LOGOUT");
     if (clientSocket != INVALID_SOCKET) {
 #ifdef _WIN32
         closesocket(clientSocket);
@@ -707,4 +906,121 @@ void Client::receiveLoop() {
             connected = false;
         }
     }
+}
+bool Client::hasResponses() {
+    lock_guard<mutex> lock(queueMutex);
+    return !responseQueue.empty();
+}
+
+string Client::getNextResponse() {
+    lock_guard<mutex> lock(queueMutex);
+    if (responseQueue.empty()) return "";
+
+    string res = responseQueue.front();
+    responseQueue.pop();
+    return res;
+}
+void update(Client * client, Page * Strona_glowna, ButtonFactory * Baza, Game *Gra) {
+    // Sprawdzamy, czy w kolejce są wiadomości z serwera
+    while (client->hasResponses()) {
+        string response = client->getNextResponse();
+        cout<<response<<"\n";
+        // 1. Obsługa logowania
+        if (response.find("LOGIN_OK")==0) {
+            vector<string>ten= split_manual(response,";");
+            client->set_Id(stoi(ten[1]));
+            if (client->get_Id()>0){
+                wygaszacz1( "Udało ci się zalogować na konto!",Baza,Strona_glowna,Gra,client);
+            }
+            // Przejdź do menu głównego lub zacznij grę
+        }
+        else if(response.find("REGISTER_OK")==0){
+            vector<string>ten= split_manual(response,";");
+            client->set_Id(stoi(ten[1]));
+            if (client->get_Id()>0){
+                wygaszacz1( "Udało ci się zarejestrować i zalogować na konto!",Baza,Strona_glowna,Gra,client);
+            }
+        }
+            // 2. Obsługa nowego zadania (dane z get_current_task)
+        else if (response.find("TASK;")==0) {
+            // Parsowanie: TASK;word;to_word;length;points;time
+            vector<string>ten= split_manual(response,";");
+            cout<<"Tu jestem.\n";
+            Gra->Start(Strona_glowna,Baza,ten[2],ten[3],stoi(ten[4]), 0, (ten[6]==""||ten[6]=="\n" ? false : true), (ten[6]=="" || ten[6]=="\n" ? "00;00;00" : replaceAll(ten[6],":",";")),true,client);
+        }
+            // 3. Obsługa błędów
+        else if (response.find("LOGIN_ERROR")==0) {
+            // Wyświetl komunikat na stronie PageZaloguj
+            vector<string>ten= split_manual(response,";");
+            wygaszacz1("Error logowania: "+ten[1], Baza, Strona_glowna, Gra, client);
+        }
+        else if (response.find("TASK_ERROR")==0){
+            vector<string>ten= split_manual(response,";");
+            wygaszacz1("Error zadania: "+ten[1], Baza, Strona_glowna, Gra, client);
+        }
+        else if (response.find("REGISTER_ERROR")==0){
+            vector<string>ten= split_manual(response,";");
+            wygaszacz1("Error rejestracji: "+ten[1], Baza, Strona_glowna, Gra, client);
+        }
+        else if (response.find("SOLUTION_OK")==0){
+            vector<string>ten= split_manual(response,";");
+            wygaszacz1("Twoje zadanie zostało zaakceptowane! Twoja obecna liczba punktów: "+ten[1], Baza, Strona_glowna, Gra, client);
+        }
+        else if(response.find("REGISTER_OUT")==0){
+            client->logout();
+            wygaszacz1("Usunąłeś konto!", Baza, Strona_glowna, Gra, client);
+        }
+        else if(response.find("LOGOUT")==0){
+            client->logout();
+            wygaszacz1("Wylogowałeś się!", Baza, Strona_glowna, Gra, client);
+        }
+    }
+}
+void Client::sendRequest(const string& message) {
+    if (!connected || clientSocket == INVALID_SOCKET) return;
+
+    // Dodajemy znak nowej linii, aby serwer Python wiedział, gdzie kończy się komenda
+    std::string fullMessage = message + "\n";
+
+    // Funkcja send jest uniwersalna dla Windows (Winsock) i Linux (POSIX)
+    int bytesSent = send(clientSocket, fullMessage.c_str(), (int)fullMessage.length(), 0);
+
+    if (bytesSent == SOCKET_ERROR) {
+        // W przypadku błędu wysyłania, oznaczamy klienta jako rozłączonego
+        connected = false;
+    }
+}
+void Client::sendSolution(vector<moved> moves, int mover) {
+    // Format: MOVES;id_zadania;ruch1;ruch2;ruch3...
+    std::string request = "MOVES;"+to_string(mover)+"\n"; // Przykładowe ID zadania
+    sendRequest(request);
+    for ( auto move : moves) {
+        sendRequest("MOVE;"+move.s_str()+"\n");
+    }
+
+}
+
+void Client::requestLogin(const std::string& login, const std::string& pass) {
+    // Format: LOGIN;uzytkownik;haslo
+    sendRequest("LOGIN;" + login + ";" + pass);
+}
+int Client::get_Id() {
+    lock_guard<mutex> lock(queueMutex);
+    return userId;
+}
+void Client::set_Id(int id) {
+    lock_guard<mutex> lock(queueMutex);
+    userId=id;
+}
+std::map<std::string, std::string> loadConfig(const std::string& filename) {
+    std::map<std::string, std::string> config;
+    std::ifstream file(filename);
+    std::string line;
+    while (std::getline(file, line)) {
+        size_t sep = line.find(": ");
+        if (sep != std::string::npos) {
+            config[line.substr(0, sep)] = line.substr(sep + 2);
+        }
+    }
+    return config;
 }

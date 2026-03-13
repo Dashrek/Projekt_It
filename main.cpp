@@ -41,7 +41,13 @@ int main()
     auto Baza=new ButtonFactory();
     auto Strona_glowna=new Page();
     Game *Gra=new Game();
-    Pagedefault(Baza,Strona_glowna, Gra);
+    auto client=new Client();
+    auto cfg = loadConfig("config.txt");
+    if (client->connectToServer(cfg["IP"],stoi(cfg["PORT"]))){
+        thread netThread(&Client::receiveLoop, client);
+        netThread.detach();
+    }
+    Pagedefault(Baza,Strona_glowna, Gra, client);
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     al_set_window_title(display, "Rubik 2D");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -142,6 +148,7 @@ int main()
             }
             Strona_glowna->thicCycle();
             Strona_glowna->flushCycle();
+            update(client,Strona_glowna,Baza,Gra);
 
 
             redraw = false;
@@ -150,6 +157,7 @@ int main()
     delete Gra;
     delete Strona_glowna;
     delete Baza;
+    delete client;
     al_destroy_event_queue(queue);
     al_destroy_display(display);
     return 0;
