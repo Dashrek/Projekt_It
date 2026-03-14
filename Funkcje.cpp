@@ -831,16 +831,16 @@ void Page::saveBackbuffer(ALLEGRO_DISPLAY* display){
 void Page::createBackbuffer() {
     ALLEGRO_DISPLAY * old=al_get_current_display();
     if (Backbuffer) {
-        if (!(screen_width==al_get_bitmap_width(Backbuffer) && screen_height==al_get_bitmap_height(Backbuffer))) {
             al_destroy_bitmap(Backbuffer);
             Backbuffer=nullptr;
 
-        }
     }
     if (!Backbuffer) {
         Backbuffer=al_create_bitmap(screen_width,screen_height);
     }
+
     al_set_target_bitmap(Backbuffer);
+
     al_clear_to_color((al_map_rgba(30,30,40,255)));
     for (auto const& [klucz, przycisk] : buttons) {
         przycisk->build();

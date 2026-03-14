@@ -365,6 +365,15 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra, Client 
             wygaszacz("Oczekiwanie na grę...", Baza, Strona_glowna,Gra, client);
         }
     };
+    if(client->get_Id()>0){
+        Strona_glowna->addButton(*Baza,Inny,"Ranking","80vw", "50vh");
+        add_event=[Baza, Strona_glowna, Gra,client] {
+            if (client->get_Id() != 0){
+                client->sendRequest("GET_RANKING;\n");
+                wygaszacz("Oczekiwanie na ranking...", Baza, Strona_glowna,Gra, client);
+            }
+        };
+    }
     //Przycisk do zalogowania na nowe konto
     Strona_glowna->addElement<TriangleButton>(*Baza,"Srebro",vector<string>{"position-x:16vw",
                                                                             "position-y:16vh",
@@ -392,6 +401,7 @@ void Pagedefault(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra, Client 
             PageZaloguj(factory, page, Gra,client);
         }else{
             client->logout();
+            client->sendRequest("LOGOUT_X;");
             wygaszacz("Trwa wylogowywanie...",factory,page,Gra,client);
         }
     };
@@ -592,6 +602,45 @@ void wyrejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client *
         client->sendRequest("REGISTER_OUT;"+to_string(client->get_Id())+";"+ ostatni_przycisk(2)->name+"\n");
         wygaszacz("Oczekiwanie na usunięcie konta",Baza,Strona_glowna,Gra,client);
     };
+}
+void PageRanking(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra, Client * client){
+    Strona_glowna->makeEmpty();
+    Strona_glowna->addElement<Atom>(*Baza, "Orange", vector<string>{"position-x:50vw",
+                                                                    "position-y:10vh",
+                                                                    "font-size:4vh",
+                                                                    "font-name:./fonts/orbitron-black.ttf",
+                                                                    "font:#7a2160",
+                                                                    "font-shadow:#290b20",
+                                                                    "font-maxwidth:30vw"},
+                                    vector<string>{"width:33vw","min-width:33vw","max-width:33vw",
+                                                   "height:6vh","min-height:6vh","max-height:6vh",
+                                                   "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                    vector<ALLEGRO_COLOR>{f_HTML("#f2bf41"),f_HTML("#7a6021"),f_HTML("#000000")}, "Ranking");
+    vector<string>ten= split_manual(client->get_ranking(),";");
+    for(int b=2;b<ten.size()-1;b++){
+        Strona_glowna->addButton(*Baza, Inny, ten[b], "50vw",
+                                     to_string(14 + 7 * b) + "vh");
+
+    }
+    Strona_glowna->addElement<Button>(*Baza,"Złoto",
+                                      vector<string>{"position-x:15vw",
+                                                     "position-y:80vh",
+                                                     "font-size:5vh",
+                                                     "font-name:./fonts/orbitron-black.ttf",
+                                                     "font:#7a2160",
+                                                     "font-shadow:#290b20",
+                                                     "font-maxwidth:16vw",
+                                                     "Background-color:#f0f0f0",
+                                                     "Frame-color:#101010"
+                                      },vector<string>{"width:17.5vw","min-width:17.5vw","max-width:17.5vw",
+                                                       "height:10vh","min-height:10vh","max-height:10vh",
+                                                       "border-radius:1px","border-thickness:0.2vw","shadow-offset-x:1px","shadow-offset-y:1px"},
+                                      vector<ALLEGRO_COLOR>{f_HTML("#C8B5B5"),
+                                                            f_HTML("#000000"),
+                                                            f_HTML("#FEF177"),
+                                                            f_HTML("#F25420"),f_HTML("#000000"),
+                                                            f_HTML("#beff56")},"Powrót");
+    add_event=[Strona_glowna,Baza,Gra,client]{ Pagedefault(Baza,Strona_glowna,Gra,client);};
 }
 void zarejestruj(ButtonFactory * Baza,  Page *Strona_glowna, Game *Gra, Client * client) {
     Strona_glowna->makeEmpty();
@@ -863,7 +912,7 @@ void Client::disconnect() {
     connected = false;
     userId=0;
     ranking="";
-    sendRequest("LOGOUT");
+    sendRequest("LOGOUT;");
     if (clientSocket != INVALID_SOCKET) {
 #ifdef _WIN32
         closesocket(clientSocket);
@@ -945,7 +994,6 @@ void update(Client * client, Page * Strona_glowna, ButtonFactory * Baza, Game *G
         else if (response.find("TASK;")==0) {
             // Parsowanie: TASK;word;to_word;length;points;time
             vector<string>ten= split_manual(response,";");
-            cout<<"Tu jestem.\n";
             Gra->Start(Strona_glowna,Baza,ten[2],ten[3],stoi(ten[4]), 0, (ten[6]==""||ten[6]=="\n" ? false : true), (ten[6]=="" || ten[6]=="\n" ? "00;00;00" : replaceAll(ten[6],":",";")),true,client);
         }
             // 3. Obsługa błędów
@@ -970,11 +1018,27 @@ void update(Client * client, Page * Strona_glowna, ButtonFactory * Baza, Game *G
             client->logout();
             wygaszacz1("Usunąłeś konto!", Baza, Strona_glowna, Gra, client);
         }
-        else if(response.find("LOGOUT")==0){
+        else if(response.find("LOGOUT_OK;")==0 || response.find("LOGOUT_XOK;")==0){
             client->logout();
             wygaszacz1("Wylogowałeś się!", Baza, Strona_glowna, Gra, client);
         }
+        else if(response.find("RANKING;")==0){
+            client->flush_ranking();
+            client->add_to_ranking(response);
+            PageRanking(Baza,Strona_glowna,Gra,client);
+        }
     }
+}
+void Client::add_to_ranking(string word){
+    lock_guard<mutex> lock(queueMutex);
+    ranking.append(word+";");
+}
+void Client::flush_ranking(){
+    lock_guard<mutex> lock(queueMutex);
+    ranking="";
+}
+string Client::get_ranking() {
+    return ranking;
 }
 void Client::sendRequest(const string& message) {
     if (!connected || clientSocket == INVALID_SOCKET) return;

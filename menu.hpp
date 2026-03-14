@@ -36,6 +36,9 @@ public:
     bool connectToServer(const string& ip, int port);
     void disconnect();
     void logout();
+    void add_to_ranking(string word);
+    string get_ranking();
+    void flush_ranking();
     // Metody komunikacyjne
     void sendRequest(const string& message);
     void requestLogin(const string& login, const string& pass);
@@ -63,7 +66,7 @@ public:
 };
 
 
-
+void PageRanking(ButtonFactory * Baza, Page * Strona_glowna, Game * Gra, Client * client);
 void update(Client * client,Page * Strona_glowna, ButtonFactory * Baza, Game *Gra);
 std::map<std::string, std::string> loadConfig(const std::string& filename);
 size_t utf8_len(const std::string& s);
